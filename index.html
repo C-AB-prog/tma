@@ -43,23 +43,23 @@
 
         .balance-section {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
         }
 
         .balance-card {
             background: linear-gradient(135deg, #667eea, #764ba2);
             padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 13px;
             font-weight: 600;
         }
 
         .points-card {
             background: linear-gradient(135deg, #f093fb, #f5576c);
             padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 13px;
             font-weight: 600;
         }
 
@@ -67,24 +67,24 @@
         .nav-tabs {
             display: flex;
             background: #1a1a1a;
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 4px;
-            margin: 16px 0;
+            margin: 12px 0;
             overflow-x: auto;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
             background: none;
             border: none;
             color: #888;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
-            border-radius: 12px;
+            border-radius: 8px;
             white-space: nowrap;
-            min-width: 80px;
+            min-width: 70px;
         }
 
         .nav-tab.active {
@@ -94,38 +94,50 @@
 
         /* Pinned Post */
         .pinned-section {
-            margin: 16px 0;
+            margin: 12px 0;
             background: #1a1a1a;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 0;
             border: 2px solid #667eea;
+            overflow: hidden;
         }
 
         .pinned-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            padding: 12px 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom: 1px solid #333;
+        }
+
+        .pinned-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #667eea;
         }
 
         .pinned-timer {
             background: #667eea;
             padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 12px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
         }
 
         /* Feed */
         .feed {
-            margin: 16px 0;
+            margin: 12px 0;
         }
 
         .post-card {
             background: #1a1a1a;
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 16px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border: 1px solid #333;
         }
 
@@ -150,7 +162,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
         }
 
@@ -161,12 +173,13 @@
 
         .post-time {
             color: #888;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .post-content {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             line-height: 1.5;
+            font-size: 14px;
         }
 
         .post-stats {
@@ -174,24 +187,28 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
         }
 
         .post-actions {
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
 
         .action-btn {
             flex: 1;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
         .like-btn {
@@ -254,10 +271,10 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: #1a1a1a;
-            padding: 24px;
-            border-radius: 20px;
+            padding: 20px;
+            border-radius: 16px;
             width: 90%;
-            max-width: 400px;
+            max-width: 380px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -266,11 +283,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .modal-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
 
@@ -278,8 +295,9 @@
             background: none;
             border: none;
             color: #888;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
+            padding: 4px;
         }
 
         .form-group {
@@ -288,8 +306,8 @@
 
         .form-label {
             display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 6px;
+            font-size: 13px;
             color: #888;
         }
 
@@ -306,6 +324,7 @@
         .form-textarea {
             resize: vertical;
             min-height: 100px;
+            font-family: inherit;
         }
 
         .submit-btn {
@@ -315,7 +334,7 @@
             border: none;
             border-radius: 8px;
             color: white;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
         }
@@ -331,15 +350,15 @@
         .packs-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 20px 0;
+            gap: 10px;
+            margin: 16px 0;
         }
 
         .pack-card {
             background: #1a1a1a;
             border: 1px solid #333;
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 10px;
+            padding: 14px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
@@ -350,115 +369,115 @@
         }
 
         .pack-amount {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .pack-price {
-            font-size: 14px;
+            font-size: 13px;
             color: #888;
         }
 
         /* Profile */
         .profile-section {
             background: #1a1a1a;
-            border-radius: 16px;
-            padding: 20px;
-            margin: 16px 0;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
         }
 
         .profile-header {
             display: flex;
             align-items: center;
-            gap: 16px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
         .profile-avatar {
-            width: 64px;
-            height: 64px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
         }
 
         .profile-name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
 
         .profile-id {
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 20px 0;
+            gap: 10px;
+            margin: 16px 0;
         }
 
         .stat-card {
             background: #0f0f0f;
-            padding: 16px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 10px;
             text-align: center;
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             margin-bottom: 4px;
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
         }
 
         /* Leaderboard */
         .leaderboard-list {
-            margin: 16px 0;
+            margin: 12px 0;
         }
 
         .leaderboard-item {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             padding: 12px;
             background: #1a1a1a;
-            border-radius: 12px;
-            margin-bottom: 8px;
+            border-radius: 10px;
+            margin-bottom: 6px;
         }
 
         .leaderboard-rank {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             background: #667eea;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
         }
 
         .leaderboard-avatar {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
         }
 
@@ -468,31 +487,32 @@
 
         .leaderboard-name {
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            font-size: 13px;
         }
 
         .leaderboard-points {
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
         }
 
         /* Pool Info */
         .pool-info {
             background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            padding: 16px;
-            border-radius: 16px;
-            margin: 16px 0;
+            padding: 14px;
+            border-radius: 12px;
+            margin: 12px 0;
             text-align: center;
         }
 
         .pool-amount {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .pool-label {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.9;
         }
 
@@ -506,18 +526,19 @@
         .points-earned {
             background: linear-gradient(135deg, #4ecdc4, #44a08d);
             color: white;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            margin-left: 8px;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-left: 6px;
         }
 
         .tg-user-info {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 12px;
+            gap: 6px;
+            font-size: 11px;
             color: #888;
+            margin-top: 4px;
         }
 
         .tg-verified {
@@ -536,45 +557,55 @@
         }
 
         .auth-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .auth-subtitle {
             color: #888;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
+            font-size: 14px;
         }
 
         .auth-button {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .auth-features {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 32px;
+            gap: 12px;
+            margin-top: 24px;
         }
 
         .auth-feature {
             background: #1a1a1a;
-            padding: 16px;
-            border-radius: 12px;
+            padding: 14px;
+            border-radius: 10px;
             text-align: center;
+            font-size: 13px;
         }
 
         .auth-feature-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .pinned-post-content {
+            padding: 16px;
+        }
+
+        .action-btn-text {
+            font-size: 13px;
         }
     </style>
 </head>
@@ -615,13 +646,13 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <div class="logo">💎 Diamond Feed</div>
+                <div class="logo" style="font-weight: 600; font-size: 16px;">💎 Diamond Feed</div>
                 <div class="balance-section">
                     <div class="points-card">
-                        🏆 <span id="points-today">0</span> баллов
+                        🏆 <span id="points-today">0</span>
                     </div>
                     <div class="balance-card">
-                        💎 <span id="diamond-balance">100</span> алмазов
+                        💎 <span id="diamond-balance">100</span>
                     </div>
                 </div>
             </div>
@@ -636,22 +667,19 @@
             <button class="nav-tab" onclick="openStoreModal()">🛒 Магазин</button>
         </nav>
 
-        <!-- Pinned Post -->
+        <!-- Pinned Post Section -->
         <section class="pinned-section" id="pinned-section" style="display: none;">
             <div class="pinned-header">
-                <div class="pinned-label">📌 Закреплено</div>
-                <div class="pinned-timer" id="pin-timer">05:00</div>
-            </div>
-            <div class="post-card">
-                <div class="post-header">
-                    <div class="author-info">
-                        <div class="author-avatar" id="pinned-avatar">T</div>
-                        <div class="author-name">Автор закрепленного поста</div>
-                    </div>
-                    <div class="post-time">2 мин назад</div>
+                <div class="pinned-label">
+                    📌 Закреплено • <span id="pinned-author">Автор</span>
                 </div>
-                <div class="post-content">
-                    Это закрепленный пост. Он находится в самом верху ленты и виден всем пользователям.
+                <div class="pinned-timer" id="pin-timer">01:00</div>
+            </div>
+            <div class="pinned-post-content">
+                <div class="post-content" id="pinned-content">Содержание закрепленного поста</div>
+                <div class="post-stats">
+                    <span>👁️ <span id="pinned-views">0</span> просмотров</span>
+                    <span>❤️ <span id="pinned-likes">0</span> лайков</span>
                 </div>
             </div>
         </section>
@@ -719,7 +747,7 @@
             </div>
 
             <div class="profile-section">
-                <h3>Математика распределения</h3>
+                <h3 style="margin-bottom: 16px; font-size: 16px;">Математика распределения</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="total-points">2,580</div>
@@ -777,7 +805,7 @@
                     <div class="modal-title">Буст поста</div>
                     <button class="close-btn" onclick="closeBoostModal()">×</button>
                 </div>
-                <p>Поднять пост в топ ленты за 10 алмазов?</p>
+                <p style="margin-bottom: 16px; font-size: 14px;">Поднять пост в топ ленты за 10 алмазов?</p>
                 <button class="submit-btn" onclick="boostPost()">Поднять за 10 💎</button>
                 <div class="cost-info">Будет списано 10 алмазов</div>
             </div>
@@ -789,7 +817,7 @@
                     <div class="modal-title">Закрепить пост</div>
                     <button class="close-btn" onclick="closePinModal()">×</button>
                 </div>
-                <p>Закрепить пост на 1 минуту за 100 алмазов?</p>
+                <p style="margin-bottom: 16px; font-size: 14px;">Закрепить пост на 1 минуту за 100 алмазов?</p>
                 <button class="submit-btn" onclick="pinPost()">Закрепить за 100 💎</button>
                 <div class="cost-info">Будет списано 100 алмазов</div>
             </div>
@@ -849,7 +877,9 @@
                 post: 10,
                 boost: 10,
                 pin: 100
-            }
+            },
+            pinnedPost: null,
+            pinTimer: null
         };
 
         // Initialize Telegram WebApp
@@ -966,7 +996,7 @@
                     timestamp: '12 мин назад',
                     views: 23,
                     likes: 12,
-                    isLiked: true,
+                    isLiked: false,
                     isBoosted: true,
                     isPinned: false,
                     createdAt: new Date(Date.now() - 12 * 60 * 1000)
@@ -983,7 +1013,7 @@
                     isPinned: false,
                     createdAt: new Date(Date.now() - 20 * 60 * 1000)
                 }
-            ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            ];
         }
 
         // Auth functions
@@ -1017,7 +1047,6 @@
             renderFeed();
             renderLeaderboard();
             updateUI();
-            startPinTimer();
             startEpochTimer();
         }
 
@@ -1098,11 +1127,23 @@
             const feed = document.getElementById('feed');
             feed.innerHTML = '';
 
-            state.posts.forEach(post => {
+            // Sort posts: pinned > boosted > recent
+            const sortedPosts = [...state.posts].sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                if (a.isBoosted && !b.isBoosted) return -1;
+                if (!a.isBoosted && b.isBoosted) return 1;
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+
+            sortedPosts.forEach(post => {
                 const author = state.users[post.authorId];
                 const isAuthor = post.authorId === state.currentUser.id;
                 
                 if (!author) return;
+                
+                // Skip pinned post as it's shown separately
+                if (post.isPinned) return;
                 
                 const postElement = document.createElement('div');
                 postElement.className = 'post-card';
@@ -1115,7 +1156,6 @@
                                 ${author.isPremium ? ' <span style="color: #4ecdc4;">⭐</span>' : ''}
                             </div>
                             ${post.isBoosted ? '<span class="points-earned">🚀 Буст</span>' : ''}
-                            ${post.isPinned ? '<span class="points-earned">📌 Закреп</span>' : ''}
                         </div>
                         <div class="post-time">${post.timestamp}</div>
                     </div>
@@ -1127,20 +1167,35 @@
                     <div class="post-actions">
                         <button class="action-btn like-btn ${post.isLiked ? 'liked' : ''}" 
                                 onclick="likePost(${post.id})">
-                            ${post.isLiked ? '❤️' : '🤍'} Лайк
+                            ${post.isLiked ? '❤️' : '🤍'} <span class="action-btn-text">Лайк</span>
                         </button>
-                        ${isAuthor ? `
-                            <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})">
-                                🚀 Буст
+                        ${isAuthor && !post.isPinned ? `
+                            <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})" ${post.isBoosted ? 'disabled' : ''}>
+                                🚀 <span class="action-btn-text">Буст</span>
                             </button>
-                            <button class="action-btn pin-btn" onclick="openPinModal(${post.id})">
-                                📌 Закреп
+                            <button class="action-btn pin-btn" onclick="openPinModal(${post.id})" ${state.pinnedPost ? 'disabled' : ''}>
+                                📌 <span class="action-btn-text">Закреп</span>
                             </button>
                         ` : ''}
                     </div>
                 `;
                 feed.appendChild(postElement);
             });
+        }
+
+        function updatePinnedSection() {
+            const pinnedSection = document.getElementById('pinned-section');
+            
+            if (state.pinnedPost) {
+                const author = state.users[state.pinnedPost.authorId];
+                pinnedSection.style.display = 'block';
+                document.getElementById('pinned-author').textContent = getUserDisplayName(author);
+                document.getElementById('pinned-content').textContent = state.pinnedPost.content;
+                document.getElementById('pinned-views').textContent = state.pinnedPost.views;
+                document.getElementById('pinned-likes').textContent = state.pinnedPost.likes;
+            } else {
+                pinnedSection.style.display = 'none';
+            }
         }
 
         function renderLeaderboard() {
@@ -1233,8 +1288,12 @@
         }
 
         function openPinModal(postId) {
+            if (state.pinnedPost) {
+                alert('Уже есть закрепленный пост! Можно закрепить только один пост одновременно.');
+                return;
+            }
             if (state.currentUser.diamonds < state.prices.pin) {
-                alert(`Недостаточно алмазов! Нужно ${state.prices.pin} 💎 для закрепа на 1 минуту.`);
+                alert(`Недостаточно алмазов! Нужно ${state.prices.pin} 💎 для закрепа.`);
                 openStoreModal();
                 return;
             }
@@ -1284,7 +1343,6 @@
                 views: 0,
                 likes: 0,
                 isLiked: false,
-                isAuthor: true,
                 isBoosted: false,
                 isPinned: false,
                 createdAt: new Date()
@@ -1301,24 +1359,20 @@
 
         function likePost(postId) {
             const post = state.posts.find(p => p.id === postId);
-            if (post && post.authorId !== state.currentUser.id) {
-                if (post.isLiked) {
-                    post.likes--;
-                    post.isLiked = false;
-                } else {
-                    post.likes++;
-                    post.isLiked = true;
-                    
-                    // Add points for reaction
-                    if (!state.points[state.currentUser.id]) {
-                        state.points[state.currentUser.id] = { reads: 0, reactions: 0, effective: 0 };
-                    }
-                    state.points[state.currentUser.id].reactions++;
-                    state.points[state.currentUser.id].effective += 3;
-                    
-                    updateUI();
-                    showPointsNotification(3, 'за реакцию');
+            if (post && post.authorId !== state.currentUser.id && !post.isLiked) {
+                // Only allow liking once and not your own posts
+                post.likes++;
+                post.isLiked = true;
+                
+                // Add points for reaction (only first time)
+                if (!state.points[state.currentUser.id]) {
+                    state.points[state.currentUser.id] = { reads: 0, reactions: 0, effective: 0 };
                 }
+                state.points[state.currentUser.id].reactions++;
+                state.points[state.currentUser.id].effective += 3;
+                
+                updateUI();
+                showPointsNotification('+3 балла за реакцию');
                 renderFeed();
             }
         }
@@ -1333,10 +1387,6 @@
                 // Add to pool
                 updatePool('boost');
                 
-                // Move to top
-                state.posts = state.posts.filter(p => p.id !== state.currentPostId);
-                state.posts.unshift(post);
-                
                 renderFeed();
                 updateUI();
                 closeBoostModal();
@@ -1346,22 +1396,58 @@
         }
 
         function pinPost() {
-            state.currentUser.diamonds -= state.prices.pin;
+            const post = state.posts.find(p => p.id === state.currentPostId);
+            if (post && !state.pinnedPost) {
+                state.currentUser.diamonds -= state.prices.pin;
+                
+                // Add to pool
+                updatePool('pin');
+                
+                // Set as pinned
+                post.isPinned = true;
+                state.pinnedPost = post;
+                
+                // Start 1-minute timer
+                startPinTimer();
+                
+                updatePinnedSection();
+                renderFeed();
+                updateUI();
+                closePinModal();
+                
+                showPointsNotification(`Пост закреплен на 1 минуту! +${state.prices.pin} 💎 в пул`);
+            }
+        }
+
+        function startPinTimer() {
+            let timeLeft = 60; // 1 minute
             
-            // Add to pool
-            updatePool('pin');
+            // Clear existing timer
+            if (state.pinTimer) {
+                clearInterval(state.pinTimer);
+            }
             
-            // Show pinned section
-            const pinnedSection = document.getElementById('pinned-section');
-            pinnedSection.style.display = 'block';
-            
-            // Start pin timer
-            startPinTimer();
-            
-            updateUI();
-            closePinModal();
-            
-            showPointsNotification(`Пост закреплен! +${state.prices.pin} 💎 в пул`);
+            state.pinTimer = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('pin-timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(state.pinTimer);
+                    state.pinTimer = null;
+                    
+                    // Unpin the post
+                    if (state.pinnedPost) {
+                        state.pinnedPost.isPinned = false;
+                        state.pinnedPost = null;
+                    }
+                    
+                    updatePinnedSection();
+                    renderFeed();
+                    showPointsNotification('Время закрепления истекло');
+                }
+            }, 1000);
         }
 
         function buyDiamonds(amount) {
@@ -1369,24 +1455,6 @@
             updateUI();
             closeStoreModal();
             showPointsNotification(`Успешно куплено ${amount} алмазов!`);
-        }
-
-        // Utility functions
-        function startPinTimer() {
-            let timeLeft = 300; // 5 minutes
-            const timerElement = document.getElementById('pin-timer');
-            
-            const timer = setInterval(() => {
-                timeLeft--;
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    document.getElementById('pinned-section').style.display = 'none';
-                }
-            }, 1000);
         }
 
         function startEpochTimer() {
@@ -1408,7 +1476,7 @@
             state.pool.current = state.pool.current * 0.05;
         }
 
-        function showPointsNotification(message, reason = '') {
+        function showPointsNotification(message) {
             const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed;
@@ -1417,12 +1485,13 @@
                 background: linear-gradient(135deg, #4ecdc4, #44a08d);
                 color: white;
                 padding: 12px 16px;
-                border-radius: 12px;
+                border-radius: 10px;
                 font-weight: 600;
                 z-index: 3000;
                 animation: slideIn 0.3s ease-out;
+                font-size: 14px;
             `;
-            notification.textContent = reason ? `+${message} балл ${reason}` : message;
+            notification.textContent = message;
             
             document.body.appendChild(notification);
             
