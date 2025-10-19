@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Diamond Feed • TMA + Ably (history)</title>
+<title>Diamond Feed • TMA + Ably</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
@@ -122,7 +122,8 @@ body{
 (function gate(){
   const tg=window.Telegram?.WebApp; let BOT='t11stMini_bot'; if(BOT.startsWith('@')) BOT=BOT.slice(1);
   if(!tg || !tg.initDataUnsafe?.user){
-    const link=`https://t.me/${BOT}?startapp=go`;
+    const currentChan = new URLSearchParams(location.search).get('chan') || 'tma';
+    const link=`https://t.me/${BOT}?startapp=${encodeURIComponent('chan='+currentChan)}`;
     document.body.innerHTML = `
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0f18;color:#f4f7ff;padding:24px;text-align:center">
         <div style="max-width:520px;background:#151b2e;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px">
@@ -293,7 +294,8 @@ if(!window.__STOP_APP__){
 const epochEnd=()=> new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()+1,0,0,0));
 const fmt=(ms)=>{ if(!Number.isFinite(ms)) ms=0; if(ms<0) ms=0; const s=(ms/1000)|0; const h=String((s/3600)|0).padStart(2,'0'); const m=String(((s%3600)/60)|0).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return `${h}:${m}:${ss}` };
 const byId=(id)=>document.getElementById(id);
-const esc=(s)=>s.replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const esc = (s) => String(s ?? '').replace(/[&<>\"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const toTime = (d) => { if(!d) return 0; if(d instanceof Date && Number.isFinite(d.getTime())) return d.getTime(); const t=Date.parse(d); return Number.isFinite(t)?t:0; };
 function toast(message, kind='ok'){ const t=document.createElement('div'); t.className=`t ${kind==='err'?'err':kind==='info'?'info':'ok'}`; t.textContent=message; byId('toast').appendChild(t); setTimeout(()=>t.remove(),2400); }
 function show(el){ el.style.display='flex'; } function hide(el){ el.style.display='none'; }
 function go(id){ document.querySelectorAll('.nav button').forEach(b=> b.classList.toggle('active', b.dataset.go===id)); document.querySelectorAll('.section').forEach(s=> s.classList.toggle('active', s.id===id)); }
@@ -312,8 +314,10 @@ const cloud = {
 const RT=(()=>{
   const listeners=new Set();
   const qs=new URLSearchParams(location.search);
-  const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY'; // твой ключ
-  const CHANNEL = qs.get('chan') || 'tma'; // при желании зафиксируй один канал
+  const startParam = Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+  let spChan=null; try{ const sp=new URLSearchParams(startParam); spChan = sp.get('chan') || startParam || null; }catch(_){}
+  const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY'; // замени на свой
+  const CHANNEL = qs.get('chan') || spChan || 'tma';
   let ab=null, ch=null;
 
   const ready = (async()=>{
@@ -330,7 +334,7 @@ const RT=(()=>{
           const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts:Date.parse(m.timestamp)||Date.now() };
           listeners.forEach(fn=> fn(data, true));
         }
-      }catch(e){ /* если Persist выключен – просто нет истории */ }
+      }catch(e){ /* если Persist выключен – нет истории */ }
 
       // Live
       ch.subscribe((msg)=>{
@@ -369,7 +373,6 @@ function loadLS(){
     }
     if(!raw) return false;
     const data=revive(JSON.parse(raw));
-    // защита
     data.users = data.users||{};
     data.posts = Array.isArray(data.posts)? data.posts: [];
     data.pool = data.pool||{};
@@ -405,7 +408,6 @@ async function load(){
       }
     }catch(_){}
   }
-  // итоговая защита
   state.users ||= {}; state.posts ||= []; state.social ||= {following:{},followers:{}};
   if(!(state.pool.epochEnds instanceof Date) || !Number.isFinite(state.pool.epochEnds.getTime())) state.pool.epochEnds=epochEnd();
   if(typeof state.pool.amt!=='number') state.pool.amt=0;
@@ -413,10 +415,7 @@ async function load(){
 }
 
 function save(){
-  // локально — сразу
-  saveLS();
-
-  // в облако — компактные части
+  saveLS(); // локально
   if(!cloud.avail) return;
   const uid = state.current;
   try{
@@ -443,7 +442,6 @@ async function initUser(){
       const raw = await cloud.get(`df:user:${id}`);
       if(raw){
         const fromCS = JSON.parse(raw);
-        // баланс — берём максимум, чтобы не "съесть" локальный прирост
         const cur = state.users[id]||{};
         const diamonds = Math.max(+cur.diamonds||0, +fromCS.diamonds||0);
         state.users[id] = {...cur, ...fromCS, diamonds};
@@ -494,14 +492,14 @@ function like(postId){
 let currentPostId=null;
 function openBoost(id){
   currentPostId=id; const p=state.posts.find(x=>x.id===id);
-  const left=p?.boostedAt?(p.boostedAt.getTime()+5*60*1000 - Date.now()):0;
+  const left=p?.boostedAt?(toTime(p.boostedAt)+5*60*1000 - Date.now()):0;
   byId('boost-hint').textContent=left>0?`Доступно через ${fmt(left)}`:'';
   show(byId('m-boost'));
 }
 function doBoost(){
   const p=state.posts.find(x=>x.id===currentPostId); if(!p) return;
   if(p.authorId!==state.current){ toast('Только автор','err'); return; }
-  const left=p.boostedAt?(p.boostedAt.getTime()+5*60*1000 - Date.now()):0;
+  const left=p.boostedAt?(toTime(p.boostedAt)+5*60*1000 - Date.now()):0;
   if(left>0){ toast('Кулдаун 5 минут','err'); return; }
   if(!spend(state.current,10)){ hide(byId('m-boost')); return; }
   p.boostedAt=new Date(); save(); hide(byId('m-boost')); renderAll();
@@ -540,43 +538,53 @@ function renderHUD(){
   byId('pf-d').textContent=u.diamonds||0;
   byId('pf-p').textContent=state.posts.filter(p=>p.authorId===state.current).length;
 }
+
 function renderFeed(){
   const feed=byId('feed'); const uid=state.current;
-  const items=[...state.posts].sort((a,b)=>
-    (b.boostedAt?b.boostedAt.getTime():0)-(a.boostedAt?a.boostedAt.getTime():0) ||
-    b.createdAt.getTime()-a.createdAt.getTime()
-  );
-  const friendsOn = byId('tab-friends').dataset.active==='1';
-  const following = new Set(state.social.following[uid]||[]);
-  const list = friendsOn ? items.filter(p=> p.authorId===uid || following.has(p.authorId)) : items;
 
-  feed.innerHTML = list.map(p=>{
-    const a=state.users[p.authorId]||{firstName:'User',username:''};
-    return `
-      <article class="card" data-id="${p.id}">
-        <div class="row">
-          <div class="user">
-            <div class="avatar">${avatar(a)}${isOnline(p.authorId)?'<span class="dot online"></span>':''}</div>
-            <div>
-              <div class="name">${nameOf(a)} ${a.isPremium?'<i class="fa-solid fa-star" style="color:var(--ok)"></i>':''} ${p.authorId===uid?'<span class="muted">(Вы)</span>':''}</div>
-              <div class="meta">${p.createdAt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${p.boostedAt? ' • <span class="badge rocket"><i class="fa-solid fa-rocket"></i> Boost</span>':''}</div>
+  try{
+    const items=(Array.isArray(state.posts)? state.posts : [])
+      .filter(p => p && p.id && p.authorId)
+      .sort((a,b)=> (toTime(b.boostedAt) - toTime(a.boostedAt)) || (toTime(b.createdAt) - toTime(a.createdAt)));
+
+    const friendsOn = byId('tab-friends').dataset.active==='1';
+    const following = new Set(state.social?.following?.[uid] || []);
+    const list = friendsOn ? items.filter(p=> p.authorId===uid || following.has(p.authorId)) : items;
+
+    feed.innerHTML = list.map(p=>{
+      const a=state.users[p.authorId] || {firstName:'User',username:''};
+      return `
+        <article class="card" data-id="${p.id}">
+          <div class="row">
+            <div class="user">
+              <div class="avatar">${avatar(a)}${isOnline(p.authorId)?'<span class="dot online"></span>':''}</div>
+              <div>
+                <div class="name">${nameOf(a)} ${a.isPremium?'<i class="fa-solid fa-star" style="color:var(--ok)"></i>':''} ${p.authorId===uid?'<span class="muted">(Вы)</span>':''}</div>
+                <div class="meta">${new Date(p.createdAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
+                  ${p.boostedAt? ' • <span class="badge rocket"><i class="fa-solid fa-rocket"></i> Boost</span>':''}
+                </div>
+              </div>
             </div>
+            <div><button class="btn" onclick="openPin('${p.id}')" ${p.authorId!==uid?'disabled':''}><i class="fa-solid fa-thumbtack"></i></button></div>
           </div>
-          <div><button class="btn" onclick="openPin('${p.id}')" ${p.authorId!==uid?'disabled':''}><i class="fa-solid fa-thumbtack"></i></button></div>
-        </div>
-        <div class="content">${esc(p.text)}</div>
-        <div class="stats"><span><i class="fa-regular fa-eye"></i> ${p.views||0}</span><span><i class="fa-regular fa-heart"></i> ${p.likes||0}</span></div>
-        <div class="actions">
-          <button class="btn" ${p.authorId===uid?'disabled':''} onclick="like('${p.id}')"><i class="fa-regular fa-heart"></i> Лайк</button>
-          <button class="btn" ${p.authorId!==uid?'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст</button>
-          <button class="btn" ${p.authorId===uid?'disabled':''} onclick="follow('${uid}','${p.authorId}')"><i class="fa-solid fa-user-plus"></i> Др</button>
-        </div>
-      </article>`;
-  }).join('');
+          <div class="content">${esc(p.text)}</div>
+          <div class="stats"><span><i class="fa-regular fa-eye"></i> ${p.views||0}</span><span><i class="fa-regular fa-heart"></i> ${p.likes||0}</span></div>
+          <div class="actions">
+            <button class="btn" ${p.authorId===uid?'disabled':''} onclick="like('${p.id}')"><i class="fa-regular fa-heart"></i> Лайк</button>
+            <button class="btn" ${p.authorId!==uid?'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст</button>
+            <button class="btn" ${p.authorId===uid?'disabled':''} onclick="follow('${uid}','${p.authorId}')"><i class="fa-solid fa-user-plus"></i> Др</button>
+          </div>
+        </article>`;
+    }).join('');
 
-  byId('feed-empty').style.display = list.length? 'none':'block';
-  renderPin();
+    byId('feed-empty').style.display = list.length? 'none':'block';
+    renderPin();
+  }catch(err){
+    console.error('renderFeed error', err, state.posts);
+    toast('Ошибка отображения ленты', 'err');
+  }
 }
+
 function renderPin(){
   const w=byId('pin-wrap');
   if(!state.pin.active){ w.style.display='none'; return; }
@@ -630,7 +638,7 @@ function tick(){
   }
   const left=state.pool.epochEnds.getTime()-Date.now();
   if(left<=0){ state.pool.epochEnds=epochEnd(); state.pool.amt=0; save(); }
-  if(state.pin.active && state.pin.active.endsAt.getTime()<=Date.now()){
+  if(state.pin.active && toTime(state.pin.active.endsAt)<=Date.now()){
     state.pin.active=null; save(); RT.send('pin:update', serPin());
   }
   renderHUD(); renderPin();
@@ -700,7 +708,7 @@ byId('friend-add').onclick=()=>{
 byId('to-friends').onclick=()=> go('friends-section'); byId('to-store').onclick=()=> go('store-section');
 
 /* 14) Boot (ждём загрузку, потом initUser) */
-(async ()=> {
+(async ()=>{
   await load();
   await initUser();
   renderAll();
