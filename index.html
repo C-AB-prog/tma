@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Diamond Feed • TMA v1.8</title>
+  <title>Diamond Feed • TMA v1.8.1 (Telegram-only + Ably realtime)</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Опционально для кросс-устройств: ?ably=YOUR_KEY&chan=diamond-feed -->
   <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <style>
@@ -104,7 +103,6 @@
     .prof-head{display:flex;gap:12px;align-items:center}
     .prof-ava{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:linear-gradient(135deg,var(--brand),var(--brand-2))}
     .prof-name{font-size:18px;font-weight:900}
-    /* Friends & Store sections */
     .section-title{font-weight:900;margin:8px 0 6px}
     .toast{position:fixed;right:14px;top:78px;z-index:95;display:grid;gap:8px}
     .toast .t{padding:11px 13px;border-radius:12px;color:#0b0b0f;font-weight:900}
@@ -188,7 +186,7 @@
       </div>
     </section>
 
-    <!-- PROFILE (упрощено) -->
+    <!-- PROFILE -->
     <section id="profile-section" class="section">
       <div class="card">
         <div class="prof-head">
@@ -214,7 +212,7 @@
       </div>
     </section>
 
-    <!-- FRIENDS (раздел) -->
+    <!-- FRIENDS -->
     <section id="friends-section" class="section">
       <div class="section-title">Друзья</div>
       <div class="card">
@@ -236,7 +234,7 @@
       </div>
     </section>
 
-    <!-- STORE (раздел) -->
+    <!-- STORE -->
     <section id="store-section" class="section">
       <div class="section-title">Магазин алмазов</div>
       <div class="card">
@@ -277,7 +275,7 @@
 
   <button class="fab" id="create-btn"><i class="fa-solid fa-plus"></i></button>
 
-  <!-- Modals (создание, буст, закреп, репорт) -->
+  <!-- Modals -->
   <div class="modal" id="modal-create"><div class="modal__card">
     <div class="modal__head"><div class="modal__title">Создать пост</div><button class="close" data-close>&times;</button></div>
     <label class="label">Текст (до 500 символов, без ссылок)</label>
@@ -311,7 +309,7 @@
   <script>
   if(!window.__STOP_APP__){
 
-  /* Theme from Telegram */
+  /* ========== THEME ========== */
   function applyTelegramTheme(){
     try{
       const tp = Telegram?.WebApp?.themeParams || {};
@@ -322,7 +320,7 @@
     }catch(e){}
   }
 
-  /* Economy / Epoch */
+  /* ========== ECONOMY / EPOCH ========== */
   const ECONOMY=Object.freeze({
     COST_POST:10, COST_BOOST:10, COST_PIN_PER_MIN:100,
     BOOST_COOLDOWN_MS:5*60*1000, POOL_SHARE:1.0, PLATFORM_FEE:0,
@@ -336,44 +334,58 @@
     const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
     const ss=String(s%60).padStart(2,'0'); return `${h}:${m}:${ss}` }
 
-  /* Realtime (BroadcastChannel + optional Ably) */
+  /* ========== REALTIME (BroadcastChannel + Ably с вашим ключом) ========== */
   const RT = (()=>{
     const listeners=new Set();
     const bc=('BroadcastChannel' in window)? new BroadcastChannel('diamond-feed-rt'):null;
     if(bc) bc.onmessage=(e)=> listeners.forEach(fn=> fn(e.data));
 
-    let ably=null, chan=null;
-    const qs=new URLSearchParams(location.search);
-    const ablyKey=qs.get('ably'); const channelName=qs.get('chan')||'diamond-feed';
+    // *** CONFIG ***
+    const DEFAULT_ABLY_KEY = 'M0ySVA.pJLtkQ:SQP5uiSTbYG8Q7YbpWxq_T_YS5LcALRE5KXktyfOl5Y'; // <-- ваш ключ
+    const DEFAULT_CHANNEL  = 'diamond-feed';
 
+    const qs=new URLSearchParams(location.search);
+    const ablyKey   = qs.get('ably') || DEFAULT_ABLY_KEY;
+    const chanName  = qs.get('chan') || DEFAULT_CHANNEL;
+
+    let ably=null, chan=null;
     async function initAbly(){
       if(!ablyKey || !window.Ably) return;
       try{
         ably = new Ably.Realtime.Promise(ablyKey);
-        chan = ably.channels.get(channelName);
+        chan = ably.channels.get(chanName);
+
+        // подписка на live
         chan.subscribe((msg)=>{
           const data = msg.data && msg.data.type ? msg.data : { type: msg.name, payload: msg.data, ts: Date.now() };
           listeners.forEach(fn=> fn(data));
         });
-        try{ // history (если включена)
+
+        // подхват последних сообщений (история)
+        try{
           const page = await chan.history({limit:100});
           const items = page?.items||[];
           for(let i=items.length-1;i>=0;i--){
-            const m=items[i]; const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts: Date.parse(m.timestamp) || Date.now() };
+            const m=items[i];
+            const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts: Date.parse(m.timestamp) || Date.now() };
             listeners.forEach(fn=> fn(data));
           }
         }catch(e){}
-      }catch(e){ console.warn('Ably init failed',e); }
+      }catch(e){ console.warn('Ably init failed', e); }
     }
     initAbly();
 
     return {
-      send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; if(chan){ try{ chan.publish(type,msg); }catch(e){} } if(bc) bc.postMessage(msg); },
+      send:(type,payload)=>{
+        const msg={type,payload,ts:Date.now()};
+        if(chan){ try{ chan.publish(type,msg); }catch(e){} }
+        if(bc) bc.postMessage(msg);
+      },
       on:(fn)=> listeners.add(fn)
     };
   })();
 
-  /* State */
+  /* ========== STATE ========== */
   let state={
     users:{}, currentUserId:null, posts:[],
     interactions:{}, daily:{}, points:{}, trust:{},
@@ -385,14 +397,14 @@
     ui:{ currentPostId:null, feedFilter:'all' }
   };
 
-  const save=()=> localStorage.setItem('diamond-feed-v18', JSON.stringify(state, (k,v)=> v instanceof Date ? {__t:'d',v:v.toISOString()}: v));
+  const save=()=> localStorage.setItem('diamond-feed-v181', JSON.stringify(state, (k,v)=> v instanceof Date ? {__t:'d',v:v.toISOString()}: v));
   const revive=(o)=>{ if(!o||typeof o!=='object') return o; if(o.__t==='d') return new Date(o.v); for(const k of Object.keys(o)) o[k]=revive(o[k]); return o; };
-  const load=()=> { const raw=localStorage.getItem('diamond-feed-v18'); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ console.warn(e); return false; } };
+  const load=()=> { const raw=localStorage.getItem('diamond-feed-v181'); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ console.warn(e); return false; } };
   function ensureSets(){ const F=state.social.following, R=state.social.followers;
     for(const uid of Object.keys(F)) if(!(F[uid] instanceof Set)) F[uid]=new Set(F[uid]);
     for(const uid of Object.keys(R)) if(!(R[uid] instanceof Set)) R[uid]=new Set(R[uid]); }
 
-  /* Strict Telegram user */
+  /* ========== USER (strict Telegram) ========== */
   function initUser(){
     const u = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if(!u) throw new Error('No Telegram user');
@@ -409,7 +421,7 @@
     state.social.followers[id] ||= new Set();
   }
 
-  /* Presence / Friends */
+  /* ========== PRESENCE & FRIENDS ========== */
   function pingPresence(){ const uid=state.currentUserId; state.presence[uid]=Date.now(); RT.send('presence:ping',{ uid }); }
   function isOnline(uid){ const last=state.presence[uid]||0; return Date.now()-last<30000; }
   function follow(me,target){
@@ -428,7 +440,7 @@
   }
   function isFollowing(me,target){ return !!state.social.following[me]?.has(target); }
 
-  /* Economy */
+  /* ========== ECONOMY OPS ========== */
   function spendDiamonds(userId,amount,meta){
     const u=state.users[userId]; if(!u||u.diamonds<amount) return false;
     u.diamonds-=amount;
@@ -494,7 +506,7 @@
     }
   }
 
-  /* Points */
+  /* ========== POINTS ========== */
   const readWatch=new Map(); let visibilityOk=document.visibilityState==='visible';
   window.addEventListener('visibilitychange',()=> visibilityOk=document.visibilityState==='visible');
   window.addEventListener('focus',()=> visibilityOk=true); window.addEventListener('blur',()=> visibilityOk=false);
@@ -543,7 +555,7 @@
     },600);
   }
 
-  /* Settlement */
+  /* ========== SETTLEMENT ========== */
   function settlementTick(){
     if(now().getTime()<state.pool.endsAt.getTime()) return;
     const ep=state.pool.epoch; const nextEp=toUtcYMD(new Date(state.pool.endsAt));
@@ -566,7 +578,7 @@
     renderAll(); save(); toast('Эпоха закрыта. Выплаты начислены.','ok');
   }
 
-  /* Render */
+  /* ========== RENDER ========== */
   const byId=(id)=> document.getElementById(id);
   function renderHUD(){
     const uid=state.currentUserId; const user=state.users[uid];
@@ -658,7 +670,7 @@
     const f=byId('following-list'); const fr=byId('followers-list'); if(f) f.innerHTML=flw; if(fr) fr.innerHTML=frs;
   }
 
-  /* UI helpers */
+  /* ========== UI HELPERS ========== */
   function react(evt,postId){ const post=state.posts.find(p=>p.id===postId); if(!post) return; grantReact(post); if(evt && evt.currentTarget){ heartBurst(evt.currentTarget); } }
   function openReport(postId){ state.ui.currentPostId=postId; showModal(byId('modal-report')); }
   function sendReport(){ const type=byId('report-type').value; state.moderation.reports.push({postId:state.ui.currentPostId, type, at:now()}); save(); closeModal('modal-report'); toast('Жалоба отправлена','info'); }
@@ -689,7 +701,7 @@
   byId('goto-friends').onclick=()=> go('friends-section');
   byId('goto-store').onclick=()=> go('store-section');
 
-  /* Realtime events */
+  /* ========== REALTIME EVENTS ========== */
   RT.on((evt)=>{
     if(!evt||!evt.type) return;
     switch(evt.type){
@@ -732,10 +744,9 @@
   function serializePost(p){ return { ...p, createdAt:p.createdAt.toISOString(), boostedAt:p.boostedAt? p.boostedAt.toISOString():null } }
   function deserializePost(p){ return { ...p, createdAt:new Date(p.createdAt), boostedAt:p.boostedAt? new Date(p.boostedAt):null } }
 
-  /* Tickers */
+  /* ========== TICKERS / BOOT ========== */
   setInterval(()=>{ renderHUD(); pinTicker(); settlementTick(); renderPinned(); pingPresence(); }, 1000);
 
-  /* Boot */
   applyTelegramTheme();
   if(!load()){ initUser(); } else { try{ initUser(); }catch(e){} }
   ensureSets();
