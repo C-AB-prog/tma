@@ -290,9 +290,8 @@ if(!window.__STOP_APP__){
 })();
 
 /* 1) Утилиты */
-const now=()=>new Date();
 const epochEnd=()=> new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()+1,0,0,0));
-const fmt=(ms)=>{ if(ms<0) ms=0; const s=(ms/1000)|0; const h=String((s/3600)|0).padStart(2,'0'); const m=String(((s%3600)/60)|0).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return `${h}:${m}:${ss}` };
+const fmt=(ms)=>{ if(!Number.isFinite(ms)) ms=0; if(ms<0) ms=0; const s=(ms/1000)|0; const h=String((s/3600)|0).padStart(2,'0'); const m=String(((s%3600)/60)|0).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return `${h}:${m}:${ss}` };
 const byId=(id)=>document.getElementById(id);
 const esc=(s)=>s.replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(message, kind='ok'){ const t=document.createElement('div'); t.className=`t ${kind==='err'?'err':kind==='info'?'info':'ok'}`; t.textContent=message; byId('toast').appendChild(t); setTimeout(()=>t.remove(),2400); }
@@ -303,8 +302,8 @@ function go(id){ document.querySelectorAll('.nav button').forEach(b=> b.classLis
 const RT=(()=>{
   const listeners=new Set();
   const qs=new URLSearchParams(location.search);
-  const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY'; // твой ключ Ably
-  const CHANNEL = qs.get('chan') || 'tma'; // у бота ссылка с ?chan=tma
+  const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY'; // твой ключ
+  const CHANNEL = qs.get('chan') || 'tma';
   let ab=null, ch=null;
 
   const ready = (async()=>{
@@ -312,7 +311,7 @@ const RT=(()=>{
       ab=new Ably.Realtime.Promise(KEY);
       ch=ab.channels.get(CHANNEL);
 
-      // История (если Persist включён)
+      // History (Persist должен быть включён)
       try{
         const page=await ch.history({limit:300});
         const items=page?.items||[];
@@ -321,37 +320,50 @@ const RT=(()=>{
           const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts:Date.parse(m.timestamp)||Date.now() };
           listeners.forEach(fn=> fn(data, true));
         }
-      }catch(e){ console.warn('History unavailable (enable Persist in Channel rules)'); }
+      }catch(e){ /* если Persist был выключен – просто нет истории */ }
 
       // Live
       ch.subscribe((msg)=>{
         const data = msg.data && msg.data.type ? msg.data : { type: msg.name, payload: msg.data, ts: Date.now() };
         listeners.forEach(fn=> fn(data, false));
       });
-    }catch(e){
-      console.error('Ably init failed', e); toast('Ably не подключился','err');
-    }
+    }catch(e){ toast('Ably не подключился','err'); }
   })();
 
   return {
     ready,
-    send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; if(ch) try{ ch.publish(type,msg); }catch(e){}; },
+    send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; try{ ch && ch.publish(type,msg); }catch(e){}; },
     on:(fn)=> listeners.add(fn)
   };
 })();
 
-/* 3) Состояние */
-let state={
-  users:{}, current:null, posts:[],
-  pool:{ amt:0, epochEnds:epochEnd() },
-  pin:{ active:null },
-  social:{ following:{}, followers:{} },
-  presence:{}
-};
-const LS='df-v21';
-const save=()=>localStorage.setItem(LS, JSON.stringify(state,(k,v)=>v instanceof Date?{__d:v.toISOString()}:v));
-const revive=(o)=>{ if(!o||typeof o!=='object') return o; if(o.__d) return new Date(o.__d); for(const k in o) o[k]=revive(o[k]); return o; };
-const load=()=>{ const raw=localStorage.getItem(LS); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ return false; }};
+/* 3) Состояние + надёжная миграция */
+let state={ users:{}, current:null, posts:[], pool:{ amt:0, epochEnds:epochEnd() }, pin:{ active:null }, social:{ following:{}, followers:{} }, presence:{} };
+const LS='df-v22';
+
+function save(){
+  const json = JSON.stringify(state,(k,v)=> v instanceof Date? {__d:v.toISOString()} : v);
+  localStorage.setItem(LS, json);
+}
+function revive(o){ if(!o||typeof o!=='object') return o; if(o.__d) return new Date(o.__d); if(Array.isArray(o)){ for(let i=0;i<o.length;i++) o[i]=revive(o[i]); return o; } for(const k in o) o[k]=revive(o[k]); return o; }
+function load(){
+  try{
+    const raw=localStorage.getItem(LS);
+    if(!raw) return false;
+    const data=revive(JSON.parse(raw));
+    // миграция / защита:
+    data.users = data.users||{};
+    data.posts = Array.isArray(data.posts)? data.posts: [];
+    data.pool = data.pool||{};
+    if(!(data.pool.epochEnds instanceof Date) || !Number.isFinite(data.pool.epochEnds.getTime())) data.pool.epochEnds=epochEnd();
+    if(typeof data.pool.amt!=='number'||!Number.isFinite(data.pool.amt)) data.pool.amt=0;
+    data.pin = data.pin||{};
+    if(data.pin.active && !(data.pin.active.endsAt instanceof Date)) data.pin.active=null;
+    data.social = data.social||{following:{},followers:{}};
+    state=data;
+    return true;
+  }catch(e){ return false; }
+}
 
 /* 4) Пользователь из Telegram */
 function initUser(){
@@ -370,9 +382,9 @@ const nameOf=(u)=> u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : 
 /* 5) Экономика и посты */
 function spend(uid,amt){
   const u=state.users[uid]; if(!u||u.diamonds<amt){ toast('Недостаточно алмазов','err'); return false; }
-  u.diamonds-=amt; state.pool.amt+=amt;
+  u.diamonds-=amt; state.pool.amt=(state.pool.amt||0)+amt;
   save(); renderHUD();
-  RT.send('pool:add',{amount:amt}); // синхронизируем пул
+  RT.send('pool:add',{amount:amt});
   return true;
 }
 function publish(uid,text){
@@ -394,8 +406,7 @@ function createPostFlow(){
   toast('Пост опубликован!');
 }
 function like(postId){
-  const p=state.posts.find(x=>x.id===postId); if(!p) return;
-  if(p.authorId===state.current) return;
+  const p=state.posts.find(x=>x.id===postId); if(!p || p.authorId===state.current) return;
   p.likes++; p.views++; save(); renderFeed();
   RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});
 }
@@ -435,9 +446,11 @@ function isOnline(uid){ const t=state.presence[uid]||0; return Date.now()-t<3000
 function renderHUD(){
   const u=state.users[state.current]||{};
   byId('bal').textContent=u.diamonds||0;
-  const left=state.pool.epochEnds.getTime()-Date.now();
-  byId('eta').textContent=fmt(left); byId('prog').style.width=`${Math.max(0,Math.min(1,1-(left/(24*3600*1000))))*100}%`;
-  byId('pool-amt').textContent=state.pool.amt.toFixed(2);
+  const ends = state.pool?.epochEnds instanceof Date ? state.pool.epochEnds : epochEnd();
+  const left=ends.getTime()-Date.now();
+  byId('eta').textContent=fmt(left);
+  byId('prog').style.width=`${Math.max(0,Math.min(1,1-(left/(24*3600*1000))))*100}%`;
+  byId('pool-amt').textContent=(state.pool.amt||0).toFixed(2);
 
   // профиль
   byId('pf-ava').textContent=avatar(u);
@@ -485,14 +498,14 @@ function renderPin(){
   if(!state.pin.active){ w.style.display='none'; return; }
   const p=state.posts.find(x=>x.id===state.pin.active.postId);
   if(!p){
-    // снять «битый» закреп, если поста нет
+    // снять «битый» закреп, если поста нет (например, после истории/очистки)
     state.pin.active=null; save(); RT.send('pin:update', serPin()); w.style.display='none'; return;
   }
   const a=state.users[p.authorId]||{firstName:'User'};
   w.style.display='block';
   byId('pin-author').textContent=nameOf(a); byId('pin-text').textContent=p.text;
   byId('pin-views').textContent=p.views||0; byId('pin-likes').textContent=p.likes||0;
-  byId('pin-left').textContent=fmt(state.pin.active.endsAt.getTime()-Date.now());
+  byId('pin-left').textContent=fmt((state.pin.active.endsAt instanceof Date?state.pin.active.endsAt:epochEnd()).getTime()-Date.now());
   byId('pin-cta').innerHTML = p.authorId===state.current ? `<button class="btn" onclick="openPin('${p.id}')"><i class="fa-solid fa-plus"></i> Продлить</button>` : '';
 }
 function renderFriends(){
@@ -529,6 +542,10 @@ function serPin(){ return { active: state.pin.active ? {postId:state.pin.active.
 
 /* 11) Таймеры */
 function tick(){
+  // если дата эпохи вдруг испорчена — восстановим
+  if(!(state.pool?.epochEnds instanceof Date) || !Number.isFinite(state.pool.epochEnds.getTime())){
+    state.pool.epochEnds=epochEnd(); save();
+  }
   const left=state.pool.epochEnds.getTime()-Date.now();
   if(left<=0){ state.pool.epochEnds=epochEnd(); state.pool.amt=0; save(); }
   if(state.pin.active && state.pin.active.endsAt.getTime()<=Date.now()){
@@ -573,7 +590,7 @@ RT.on((evt,fromHistory)=>{
     case 'presence:ping':{
       const {uid}=evt.payload; state.presence[uid]=Date.now(); break;}
     case 'pool:add':{
-      const {amount}=evt.payload||{}; if(typeof amount==='number'){ state.pool.amt += amount; save(); renderHUD(); }
+      const {amount}=evt.payload||{}; if(typeof amount==='number'){ state.pool.amt = (state.pool.amt||0) + amount; save(); renderHUD(); }
       break;}
   }
 });
@@ -603,12 +620,9 @@ byId('to-friends').onclick=()=> go('friends-section'); byId('to-store').onclick=
 /* 14) Boot */
 if(!load()) initUser(); else initUser();
 renderAll();
-RT.ready.finally(()=>{ // при старте расшарим свою карточку
-  const me = state.users[state.current];
-  RT.send('user:upsert',{user:me});
-});
+RT.ready.finally(()=>{ const me = state.users[state.current]; RT.send('user:upsert',{user:me}); });
 
-/* 15) Экспорт для inline-онкликов (глобально) */
+/* 15) Экспорт для inline-онкликов */
 window.like=like; window.openBoost=openBoost; window.openPin=openPin; window.follow=follow;
 
 } // end !__STOP_APP__
