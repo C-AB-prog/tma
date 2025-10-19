@@ -123,8 +123,8 @@ body{
 (function gate(){
   const tg=window.Telegram?.WebApp; let BOT='t11stMini_bot'; if(BOT.startsWith('@')) BOT=BOT.slice(1);
   if(!tg || !tg.initDataUnsafe?.user){
-    const currentChan = new URLSearchParams(location.search).get('chan') || 'tma';
-    const link=`https://t.me/${BOT}?startapp=${encodeURIComponent('chan='+currentChan)}`;
+    // Жёстко отправляем только в chan=tma
+    const link=`https://t.me/${BOT}?startapp=${encodeURIComponent('chan=tma')}`;
     document.body.innerHTML = `
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0f18;color:#f4f7ff;padding:24px;text-align:center">
         <div style="max-width:520px;background:#151b2e;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px">
@@ -317,41 +317,58 @@ const cloud = {
   keys: () => new Promise(res=> CS?.getKeys((e,ks)=> res(e?[]:ks || []))),
 };
 
-/* ===================== 2) Realtime (Ably) ===================== */
+/* ===================== 2) Realtime (Ably) — читаем из legacy, публикуем в tma ===================== */
 const RT=(()=>{
   const listeners=new Set();
-  const qs=new URLSearchParams(location.search);
+
+  // читаем ?chan и start_param (если когда-то запускали с другим каналом)
+  const qs = new URLSearchParams(location.search);
   const startParam = Telegram?.WebApp?.initDataUnsafe?.start_param || '';
-  let spChan=null; try{ const sp=new URLSearchParams(startParam); spChan = sp.get('chan') || startParam || null; }catch(_){}
-  const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY'; // <-- замени на свой
-  const CHANNEL = qs.get('chan') || spChan || 'tma';
-  let ab=null, ch=null;
+  let spChan = null;
+  try{
+    const sp = new URLSearchParams(startParam.includes('=') ? startParam : `chan=${startParam}`);
+    spChan = (sp.get('chan') || '').trim();
+  }catch(_){}
+
+  const KEY = 'E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY'; // <-- замени на свой
+  const MAIN = 'tma'; // единый канал публикации
+  const legacy = (qs.get('chan') || spChan || '').trim();
+  const CHANNELS = Array.from(new Set([MAIN, legacy].filter(Boolean))); // слушаем оба
+  let ab=null, pubCh=null;
 
   const ready = (async()=>{
     try{
-      ab=new Ably.Realtime.Promise(KEY);
-      ch=ab.channels.get(CHANNEL);
+      ab = new Ably.Realtime.Promise(KEY);
+      pubCh = ab.channels.get(MAIN); // публикуем только сюда
 
-      try{
-        const page=await ch.history({limit:300});
-        const items=page?.items||[];
-        for(let i=items.length-1;i>=0;i--){
-          const m=items[i];
-          const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts:Date.parse(m.timestamp)||Date.now() };
-          listeners.forEach(fn=> fn(data, true));
-        }
-      }catch(e){}
-
-      ch.subscribe((msg)=>{
-        const data = msg.data && msg.data.type ? msg.data : { type: msg.name, payload: msg.data, ts: Date.now() };
-        listeners.forEach(fn=> fn(data, false));
-      });
+      for(const name of CHANNELS){
+        const ch = ab.channels.get(name);
+        // История
+        try{
+          const page=await ch.history({limit:300});
+          const items=page?.items||[];
+          for(let i=items.length-1;i>=0;i--){
+            const m=items[i];
+            const data = m.data && m.data.type
+              ? m.data
+              : { type:m.name, payload:m.data, ts:Date.parse(m.timestamp)||Date.now() };
+            listeners.forEach(fn=> fn(data, true));
+          }
+        }catch(e){}
+        // Live
+        ch.subscribe((msg)=>{
+          const data = msg.data && msg.data.type
+            ? msg.data
+            : { type: msg.name, payload: msg.data, ts: Date.now() };
+          listeners.forEach(fn=> fn(data, false));
+        });
+      }
     }catch(e){ toast('Ably не подключился','err'); }
   })();
 
   return {
     ready,
-    send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; try{ ch && ch.publish(type,msg); }catch(e){}; },
+    send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; try{ pubCh && pubCh.publish(type,msg); }catch(e){}; },
     on:(fn)=> listeners.add(fn)
   };
 })();
@@ -364,11 +381,10 @@ let state={
   pin:{ active:null },
   social:{ following:{}, followers:{} },
   presence:{},
-  viewsByUser:{} , // { uid: {postId:true} } — уникальные просмотры текущего юзера
-  epochPoints:{}   // { uid: number } — баллы за текущую эпоху
+  viewsByUser:{},
+  epochPoints:{}
 };
 
-/* стабильный ключ + миграция */
 const LS_MAIN='diamond-feed';
 const LS_LEGACY=['df-v22','df-v21','df-v20'];
 
@@ -476,7 +492,7 @@ function spend(uid,amt){
   RT.send('pool:add',{amount:amt,from:uid});
   return true;
 }
-function award(uid,points){ // баллы за действия
+function award(uid,points){
   if(!uid||!Number.isFinite(points)||points<=0) return;
   state.users[uid].points = (state.users[uid].points||0) + points;
   state.epochPoints[uid]  = (state.epochPoints[uid]||0) + points;
@@ -503,8 +519,7 @@ function createPostFlow(){
 }
 function like(postId){
   const p=state.posts.find(x=>x.id===postId); if(!p || p.authorId===state.current) return;
-  p.likes++; p.views++; // лайк одновременно засчитывает просмотр
-  award(state.current,2);
+  p.likes++; p.views++; award(state.current,2);
   save(); renderFeed();
   RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});
 }
@@ -540,10 +555,10 @@ function doPin(){
 function markViewed(postId){
   const uid=state.current; if(!uid) return;
   state.viewsByUser[uid] ||= {};
-  if(state.viewsByUser[uid][postId]) return; // уже считали
+  if(state.viewsByUser[uid][postId]) return;
   const p=state.posts.find(x=>x.id===postId); if(!p) return;
   state.viewsByUser[uid][postId]=true;
-  p.views++; award(uid,1); // +1 балл за чтение
+  p.views++; award(uid,1);
   save(); renderFeed();
   RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});
 }
@@ -616,7 +631,6 @@ function renderFeed(){
     byId('feed-empty').style.display = list.length? 'none':'block';
     renderPin();
 
-    // наблюдатель за появлением карточек (учёт просмотра 1 раз)
     if(feedObserver) feedObserver.disconnect();
     feedObserver = new IntersectionObserver((entries)=>{
       entries.forEach(en=>{
@@ -679,13 +693,10 @@ function settleIfNeeded(){
   const left = state.pool.epochEnds.getTime()-now.getTime();
   if(left>0) return;
 
-  // идентификатор только что завершившейся эпохи (день UTC)
-  const justFinished = new Date(state.pool.epochEnds.getTime()); // это начало новой эпохи; закончившаяся — вчера
+  const justFinished = new Date(state.pool.epochEnds.getTime());
   justFinished.setUTCDate(justFinished.getUTCDate()-1);
   const eid = epochIdUTC(justFinished);
-  if(state.pool.settledId===eid) { // уже закрывали
-    state.pool.epochEnds=epochEnd(); save(); renderHUD(); return;
-  }
+  if(state.pool.settledId===eid) { state.pool.epochEnds=epochEnd(); save(); renderHUD(); return; }
 
   const totalPts = Object.values(state.epochPoints||{}).reduce((a,b)=>a+(+b||0),0);
   const amount = state.pool.amt||0;
@@ -707,7 +718,7 @@ function settleIfNeeded(){
   state.pool.amt=0;
   state.pool.epochEnds=epochEnd();
   state.pool.settledId=eid;
-  state.epochPoints={}; // обнулить баллы эпохи
+  state.epochPoints={};
   save(); renderHUD();
 
   RT.send('pool:settle',{eid,results,next:state.pool.epochEnds.toISOString()});
@@ -717,7 +728,7 @@ function tick(){
   if(!(state.pool?.epochEnds instanceof Date) || !Number.isFinite(state.pool.epochEnds.getTime())){
     state.pool.epochEnds=epochEnd();
   }
-  settleIfNeeded(); // проверяем и при необходимости распределяем
+  settleIfNeeded();
   renderHUD(); renderPin();
 }
 setInterval(tick,1000);
@@ -754,7 +765,6 @@ RT.on((evt,fromHistory)=>{
       const {uid}=evt.payload; state.presence[uid]=Date.now(); break;}
     case 'pool:add':{
       const {amount,from}=evt.payload||{};
-      // уже учли локально в spend(); не дублируем, если это наш own-эвент
       if(from!==state.current && typeof amount==='number'){
         state.pool.amt = (state.pool.amt||0) + amount; save(); renderHUD();
       }
@@ -768,7 +778,6 @@ RT.on((evt,fromHistory)=>{
     case 'pool:settle':{
       const {eid,results,next}=evt.payload||{};
       if(!eid || state.pool.settledId===eid) break;
-      // применяем результаты распределения
       for(const uid in results){
         state.users[uid] ||= {diamonds:0, points:0, id:uid, firstName:'User', username:uid};
         state.users[uid].diamonds = (state.users[uid].diamonds||0) + (+results[uid]||0);
