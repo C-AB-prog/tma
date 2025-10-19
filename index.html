@@ -607,6 +607,60 @@
         .action-btn-text {
             font-size: 13px;
         }
+
+        /* User Switch */
+        .user-switch {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 12px;
+            z-index: 1000;
+            min-width: 200px;
+        }
+
+        .user-switch-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #888;
+        }
+
+        .user-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border: none;
+            background: none;
+            color: white;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .user-option:hover {
+            background: #333;
+        }
+
+        .user-option.active {
+            background: #667eea;
+        }
+
+        .user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -658,6 +712,14 @@
             </div>
         </header>
 
+        <!-- User Switch -->
+        <div class="user-switch" id="user-switch" style="display: none;">
+            <div class="user-switch-title">👥 Переключить пользователя</div>
+            <div id="user-options">
+                <!-- Users will be loaded here -->
+            </div>
+        </div>
+
         <!-- Navigation -->
         <nav class="nav-tabs">
             <button class="nav-tab active" onclick="showSection('feed')">📱 Лента</button>
@@ -665,6 +727,7 @@
             <button class="nav-tab" onclick="showSection('profile')">👤 Профиль</button>
             <button class="nav-tab" onclick="showSection('pool')">💰 Пул</button>
             <button class="nav-tab" onclick="openStoreModal()">🛒 Магазин</button>
+            <button class="nav-tab" onclick="toggleUserSwitch()">👥 Пользователи</button>
         </nav>
 
         <!-- Pinned Post Section -->
@@ -855,11 +918,12 @@
         // Telegram WebApp initialization
         const tg = window.Telegram.WebApp;
         
-        // State management with Telegram integration
+        // State management with shared posts between users
         let state = {
             currentUser: null,
             users: {},
-            posts: [],
+            posts: [], // Общие посты для всех пользователей
+            userPosts: {}, // Отдельные лайки для каждого пользователя
             points: {},
             pool: {
                 current: 1250,
@@ -925,6 +989,9 @@
                     reactions: 0, 
                     effective: 0 
                 };
+
+                // Initialize user posts data
+                state.userPosts[userId] = {};
             }
             
             state.currentUser = state.users[userId];
@@ -940,6 +1007,7 @@
 
         // Load sample posts with Telegram users
         function loadSamplePosts() {
+            // Create sample users
             const sampleUsers = {
                 '2': {
                     id: '2',
@@ -961,6 +1029,20 @@
                     username: 'dmitry_tg', 
                     isPremium: true,
                     diamonds: 500
+                },
+                '5': {
+                    id: '5',
+                    firstName: 'Екатерина',
+                    username: 'ekaterina_tg',
+                    isPremium: false,
+                    diamonds: 150
+                },
+                '6': {
+                    id: '6',
+                    firstName: 'Сергей',
+                    username: 'sergey_tg',
+                    isPremium: true,
+                    diamonds: 300
                 }
             };
 
@@ -974,17 +1056,20 @@
                 };
                 // Calculate effective points
                 state.points[user.id].effective = state.points[user.id].reads + (state.points[user.id].reactions * 3);
+                
+                // Initialize user posts data
+                state.userPosts[user.id] = {};
             });
 
+            // Create shared posts that all users can see
             state.posts = [
                 {
                     id: 1,
                     authorId: '2',
                     content: 'Привет всем! Это демо-версия ленты с алмазами. Здесь можно публиковать посты, бустить их и зарабатывать баллы за активность.',
                     timestamp: '5 мин назад',
-                    views: 15,
-                    likes: 8,
-                    isLiked: false,
+                    views: 25,
+                    likes: 12,
                     isBoosted: false,
                     isPinned: false,
                     createdAt: new Date(Date.now() - 5 * 60 * 1000)
@@ -994,9 +1079,8 @@
                     authorId: '3',
                     content: 'Отличная идея с системой баллов и распределением пула! Жду, когда можно будет протестировать полную версию.',
                     timestamp: '12 мин назад',
-                    views: 23,
-                    likes: 12,
-                    isLiked: false,
+                    views: 18,
+                    likes: 8,
                     isBoosted: true,
                     isPinned: false,
                     createdAt: new Date(Date.now() - 12 * 60 * 1000)
@@ -1006,14 +1090,44 @@
                     authorId: '4',
                     content: 'Уже купил алмазов и тестирую функционал. Система закрепления постов работает отлично!',
                     timestamp: '20 мин назад',
-                    views: 8,
-                    likes: 3,
-                    isLiked: false,
+                    views: 15,
+                    likes: 6,
                     isBoosted: false,
                     isPinned: false,
                     createdAt: new Date(Date.now() - 20 * 60 * 1000)
+                },
+                {
+                    id: 4,
+                    authorId: '5',
+                    content: 'Как вам новая система наград? Мне кажется, это отличная мотивация для создания качественного контента!',
+                    timestamp: '35 мин назад',
+                    views: 22,
+                    likes: 10,
+                    isBoosted: false,
+                    isPinned: false,
+                    createdAt: new Date(Date.now() - 35 * 60 * 1000)
+                },
+                {
+                    id: 5,
+                    authorId: '6',
+                    content: 'Только что опубликовал свой первый пост. Интересно посмотреть, как работает система баллов на практике.',
+                    timestamp: '50 мин назад',
+                    views: 30,
+                    likes: 15,
+                    isBoosted: false,
+                    isPinned: false,
+                    createdAt: new Date(Date.now() - 50 * 60 * 1000)
                 }
             ];
+
+            // Initialize likes for all users
+            Object.keys(state.users).forEach(userId => {
+                state.posts.forEach(post => {
+                    state.userPosts[userId][post.id] = {
+                        isLiked: false
+                    };
+                });
+            });
         }
 
         // Auth functions
@@ -1040,6 +1154,43 @@
             };
             
             handleTelegramUser(mockUser);
+        }
+
+        // User switching
+        function toggleUserSwitch() {
+            const userSwitch = document.getElementById('user-switch');
+            userSwitch.style.display = userSwitch.style.display === 'none' ? 'block' : 'none';
+            if (userSwitch.style.display === 'block') {
+                renderUserOptions();
+            }
+        }
+
+        function renderUserOptions() {
+            const userOptions = document.getElementById('user-options');
+            userOptions.innerHTML = '';
+
+            Object.values(state.users).forEach(user => {
+                const userOption = document.createElement('button');
+                userOption.className = `user-option ${user.id === state.currentUser.id ? 'active' : ''}`;
+                userOption.onclick = () => switchUser(user.id);
+                userOption.innerHTML = `
+                    <div class="user-avatar">${getUserAvatarText(user)}</div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">${getUserDisplayName(user)}</div>
+                        <div style="font-size: 11px; color: #888;">${user.diamonds} 💎 • ${state.points[user.id]?.effective || 0} баллов</div>
+                    </div>
+                `;
+                userOptions.appendChild(userOption);
+            });
+        }
+
+        function switchUser(userId) {
+            state.currentUser = state.users[userId];
+            updateUI();
+            renderFeed();
+            renderLeaderboard();
+            toggleUserSwitch();
+            showPointsNotification(`Переключен на ${getUserDisplayName(state.currentUser)}`);
         }
 
         // Initialize the app
@@ -1139,6 +1290,7 @@
             sortedPosts.forEach(post => {
                 const author = state.users[post.authorId];
                 const isAuthor = post.authorId === state.currentUser.id;
+                const userPostData = state.userPosts[state.currentUser.id][post.id] || { isLiked: false };
                 
                 if (!author) return;
                 
@@ -1154,6 +1306,7 @@
                             <div class="author-name">
                                 ${getUserDisplayName(author)}
                                 ${author.isPremium ? ' <span style="color: #4ecdc4;">⭐</span>' : ''}
+                                ${isAuthor ? ' <span style="color: #4ecdc4;">(Вы)</span>' : ''}
                             </div>
                             ${post.isBoosted ? '<span class="points-earned">🚀 Буст</span>' : ''}
                         </div>
@@ -1165,9 +1318,9 @@
                         <span>❤️ ${post.likes} лайков</span>
                     </div>
                     <div class="post-actions">
-                        <button class="action-btn like-btn ${post.isLiked ? 'liked' : ''}" 
-                                onclick="likePost(${post.id})">
-                            ${post.isLiked ? '❤️' : '🤍'} <span class="action-btn-text">Лайк</span>
+                        <button class="action-btn like-btn ${userPostData.isLiked ? 'liked' : ''}" 
+                                onclick="likePost(${post.id})" ${isAuthor ? 'disabled' : ''}>
+                            ${userPostData.isLiked ? '❤️' : '🤍'} <span class="action-btn-text">Лайк</span>
                         </button>
                         ${isAuthor && !post.isPinned ? `
                             <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})" ${post.isBoosted ? 'disabled' : ''}>
@@ -1223,6 +1376,7 @@
                         <div class="leaderboard-name">
                             ${getUserDisplayName(user)}
                             ${user.isPremium ? ' <span style="color: #4ecdc4;">⭐</span>' : ''}
+                            ${user.userId === state.currentUser.id ? ' <span style="color: #4ecdc4;">(Вы)</span>' : ''}
                         </div>
                         <div class="leaderboard-points">${user.points} баллов</div>
                     </div>
@@ -1334,7 +1488,7 @@
             // Add to pool
             updatePool('post');
             
-            // Add new post
+            // Add new post (visible to ALL users)
             const newPost = {
                 id: Date.now(),
                 authorId: state.currentUser.id,
@@ -1342,13 +1496,22 @@
                 timestamp: 'только что',
                 views: 0,
                 likes: 0,
-                isLiked: false,
                 isBoosted: false,
                 isPinned: false,
                 createdAt: new Date()
             };
 
             state.posts.unshift(newPost);
+            
+            // Initialize post data for all users
+            Object.keys(state.users).forEach(userId => {
+                if (!state.userPosts[userId][newPost.id]) {
+                    state.userPosts[userId][newPost.id] = {
+                        isLiked: false
+                    };
+                }
+            });
+            
             renderFeed();
             updateUI();
             closeCreatePostModal();
@@ -1359,10 +1522,12 @@
 
         function likePost(postId) {
             const post = state.posts.find(p => p.id === postId);
-            if (post && post.authorId !== state.currentUser.id && !post.isLiked) {
+            const userPostData = state.userPosts[state.currentUser.id][postId];
+            
+            if (post && post.authorId !== state.currentUser.id && !userPostData.isLiked) {
                 // Only allow liking once and not your own posts
                 post.likes++;
-                post.isLiked = true;
+                userPostData.isLiked = true;
                 
                 // Add points for reaction (only first time)
                 if (!state.points[state.currentUser.id]) {
@@ -1519,6 +1684,13 @@
             }
         `;
         document.head.appendChild(style);
+
+        // Close user switch when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-switch') && !e.target.closest('.nav-tab:last-child')) {
+                document.getElementById('user-switch').style.display = 'none';
+            }
+        });
 
         // Initialize Telegram app when loaded
         document.addEventListener('DOMContentLoaded', initTelegramApp);
