@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Diamond Feed • v1.9 (Telegram-only, Ably realtime)</title>
+<title>Diamond Feed • v2.0 (Telegram-only + Ably realtime)</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
@@ -26,7 +26,7 @@ body{
 }
 .container{max-width:760px;margin:0 auto;padding:0 14px calc(88px + env(safe-area-inset-bottom))}
 
-/* Topbar (упрощённый) */
+/* Topbar (лаконичный) */
 .topbar{position:sticky;top:0;z-index:70;backdrop-filter:saturate(1.2) blur(12px);
   background:linear-gradient(to bottom, rgba(11,15,24,.9), rgba(11,15,24,.55));
   border-bottom:1px solid rgba(255,255,255,.06)}
@@ -78,7 +78,7 @@ body{
 .badge.rocket{color:var(--ok);border-color:rgba(68,214,163,.4);background:linear-gradient(180deg, rgba(68,214,163,.18), rgba(255,255,255,.02))}
 .empty{padding:44px 18px;text-align:center;color:var(--muted)}
 
-/* Nav: 5 вкладок */
+/* Nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:90;
   backdrop-filter:blur(12px);background:linear-gradient(to top, rgba(11,15,24,.92), rgba(11,15,24,.55));
   border-top:1px solid rgba(255,255,255,.08);padding:10px 8px calc(10px + env(safe-area-inset-bottom));
@@ -86,7 +86,7 @@ body{
 .nav button{border:none;background:none;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center;padding:8px 6px;border-radius:10px;font-size:11px}
 .nav button.active{color:var(--brand);background:rgba(125,169,255,.16)}
 
-/* FAB — поднял z-index, чтобы точно кликабельна поверх навбара */
+/* FAB — поверх навбара */
 .fab{position:fixed;right:14px;bottom:calc(84px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;
   display:grid;place-items:center;border:none;cursor:pointer;color:white;z-index:120;
   background:conic-gradient(from 180deg at 50% 50%, var(--brand) 0deg, var(--brand-2) 160deg, var(--brand) 360deg);
@@ -102,7 +102,7 @@ body{
 .textarea{min-height:120px;resize:vertical}
 .submit{width:100%;margin-top:10px}
 
-/* Профиль — лаконично */
+/* Профиль */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);
   border-radius:14px;padding:14px;text-align:center}
@@ -121,7 +121,7 @@ body{
 </head>
 <body>
 
-<!-- Телеграм-гейт -->
+<!-- Telegram-gate -->
 <script>
 (function gate(){
   const tg=window.Telegram?.WebApp; let BOT='t11stMini_bot'; if(BOT.startsWith('@')) BOT=BOT.slice(1);
@@ -151,19 +151,13 @@ body{
       <div class="logo"><i class="fa-solid fa-gem"></i></div>
       <div class="title">Diamond Feed</div>
     </div>
-    <div class="head-kpis">
-      <!-- убрали RAW/EFF из головы, только баланс -->
-      <div class="pill"><i class="fa-solid fa-gem"></i><span id="bal">0</span></div>
-    </div>
+    <div class="head-kpis"><div class="pill"><i class="fa-solid fa-gem"></i><span id="bal">0</span></div></div>
   </div>
-  <div class="meta-line container">
-    <span class="chip"><i class="fa-regular fa-clock"></i> до 24:00 UTC: <b id="eta">--:--:--</b></span>
-  </div>
+  <div class="meta-line container"><span class="chip"><i class="fa-regular fa-clock"></i> до 24:00 UTC: <b id="eta">--:--:--</b></span></div>
   <div class="progress"><span id="prog"></span></div>
 </header>
 
 <main class="container">
-
   <!-- PIN -->
   <section class="pinned" id="pin-wrap">
     <div class="card">
@@ -189,10 +183,10 @@ body{
       <button class="pill" id="tab-all" style="box-shadow:var(--ring)"><i class="fa-solid fa-globe"></i> Все</button>
     </div>
     <div id="feed"></div>
-    <div id="feed-empty" class="empty" style="display:none"><i class="fa-regular fa-newspaper" style="font-size:40px"></i><div>Лента пуста. Нажмите «+», чтобы написать пост.</div></div>
+    <div id="feed-empty" class="empty" style="display:none"><i class="fa-regular fa-newspaper" style="font-size:40px"></i><div>Лента пуста. Нажмите «+».</div></div>
   </section>
 
-  <!-- PROFILE (лаконичный) -->
+  <!-- PROFILE -->
   <section id="profile-section" class="section">
     <div class="card">
       <div class="prof">
@@ -235,14 +229,13 @@ body{
   <section id="store-section" class="section">
     <div class="section-title">Магазин алмазов</div>
     <div class="card">
-      <div class="label">Оплата (демо)</div>
       <div class="grid" style="margin-top:8px">
         <button class="btn" data-pack="100">100 💎</button>
         <button class="btn" data-pack="500">500 💎</button>
         <button class="btn" data-pack="1000">1000 💎</button>
         <button class="btn" data-pack="5000">5000 💎</button>
       </div>
-      <div class="meta" style="margin-top:8px">Средства зачисляются мгновенно (эмуляция)</div>
+      <div class="meta" style="margin-top:8px">Демо-оплата: зачисляется сразу</div>
     </div>
   </section>
 
@@ -251,7 +244,6 @@ body{
     <div class="section-title">Пул наград</div>
     <div class="card"><div class="name">Текущий пул: <b id="pool-amt">0</b> 💎</div></div>
   </section>
-
 </main>
 
 <nav class="nav">
@@ -288,179 +280,184 @@ body{
 <script>
 if(!window.__STOP_APP__){
 
-/* ---- safe theme (не ломаем читаемость) ---- */
-(function safeTheme(){
+/* Safe theme */
+(function(){
   try{
     const tp = Telegram?.WebApp?.themeParams || {};
     const set=(k,v)=> v && document.documentElement.style.setProperty(k,v);
     if(tp.text_color) set('--text',tp.text_color);
     if(tp.bg_color)   set('--bg',tp.bg_color);
-    if(tp.secondary_bg_color) { set('--surface',tp.secondary_bg_color); set('--card',tp.secondary_bg_color); }
+    if(tp.secondary_bg_color){ set('--surface',tp.secondary_bg_color); set('--card',tp.secondary_bg_color); }
     if(tp.button_color) set('--brand',tp.button_color);
     if(tp.hint_color)   set('--muted',tp.hint_color);
   }catch(e){}
 })();
 
-/* ---- constants ---- */
-const ECON=Object.freeze({ COST_POST:10, COST_BOOST:10, COST_PIN:100, BOOST_CD:5*60*1000 });
+/* Utils */
 const now=()=>new Date();
 const epochEnd=()=> new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()+1,0,0,0));
 const fmt=(ms)=>{ if(ms<0) ms=0; const s=(ms/1000)|0; const h=String((s/3600)|0).padStart(2,'0'); const m=String(((s%3600)/60)|0).padStart(2,'0'); const ss=String(s%60).padStart(2,'0'); return `${h}:${m}:${ss}` };
 const byId=(id)=>document.getElementById(id);
-
-/* ---- realtime (Ably; ключ встроен) ---- */
-const RT=(()=>{ 
-  const listeners=new Set();
-  const DEFAULT_KEY='M0ySVA.pJLtkQ:SQP5uiSTbYG8Q7YbpWxq_T_YS5LcALRE5KXktyfOl5Y';
-  const CHANNEL='diamond-feed';
-  let ab=null,ch=null,ready=false;
-
-  (async()=>{
-    try{
-      ab=new Ably.Realtime.Promise(DEFAULT_KEY);
-      ch=ab.channels.get(CHANNEL);
-      ch.subscribe(m=>{ const data=m.data&&m.data.type?m.data:{type:m.name,payload:m.data,ts:Date.now()}; listeners.forEach(f=>f(data)); });
-      // history (последние 200 сообщений)
-      try{
-        const pg=await ch.history({limit:200});
-        const items=pg?.items||[];
-        for(let i=items.length-1;i>=0;i--){
-          const m=items[i]; const data=m.data&&m.data.type?m.data:{type:m.name,payload:m.data,ts:Date.parse(m.timestamp)||Date.now()};
-          listeners.forEach(f=>f(data));
-        }
-      }catch(e){ toast('Ably: история недоступна (включите Persist all messages)','info'); }
-      ready=true;
-    }catch(e){ console.error(e); toast('Ably не подключился. Работает только локально.','err'); }
-  })();
-
-  return {
-    send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; if(ch) try{ ch.publish(type,msg);}catch(e){}; },
-    on:(fn)=> listeners.add(fn)
-  };
-})();
-
-/* ---- state ---- */
-let state={
-  users:{}, current:null, posts:[],
-  pool:{ amt:0, epochEnds:epochEnd() },
-  pin:{ active:null, queue:[] },
-  points:{}, caps:{}, social:{ following:{}, followers:{} }
-};
-const LSKEY='df-v19';
-const save=()=>localStorage.setItem(LSKEY, JSON.stringify(state,(k,v)=>v instanceof Date?{__d:v.toISOString()}:v));
-const revive=(o)=>{ if(!o||typeof o!=='object') return o; if(o.__d) return new Date(o.__d); for(const k in o) o[k]=revive(o[k]); return o; };
-const load=()=>{ const raw=localStorage.getItem(LSKEY); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ return false; }};
-
-/* ---- user ---- */
-function initUser(){
-  const u=Telegram?.WebApp?.initDataUnsafe?.user;
-  if(!u) throw new Error('no TG user');
-  const id=String(u.id);
-  state.users[id] ||= {id, firstName:u.first_name||'User', lastName:u.last_name||'', username:u.username||('user'+id), diamonds:300, isPremium:!!u.is_premium};
-  state.current=id;
-  state.social.following[id] ||= new Set();
-  state.social.followers[id] ||= new Set();
-}
-
-/* ---- helpers ---- */
-const avatar=(u)=> (u.firstName||u.username||'U').slice(0,1).toUpperCase();
-const nameOf=(u)=> u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : (u.firstName || '@'+u.username);
+const esc=(s)=>s.replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function toast(msg,kind='ok'){ const t=document.createElement('div'); t.className=`t ${kind==='err'?'err':kind==='info'?'info':'ok'}`; t.textContent=msg; byId('toast').appendChild(t); setTimeout(()=>t.remove(),2600); }
 function show(el){ el.style.display='flex'; } function hide(el){ el.style.display='none'; }
 function go(id){ document.querySelectorAll('.nav button').forEach(b=> b.classList.toggle('active', b.dataset.go===id)); document.querySelectorAll('.section').forEach(s=> s.classList.toggle('active', s.id===id)); }
 
-/* ---- economy ---- */
+/* Realtime (Ably) */
+const RT=(()=>{
+  const listeners=new Set();
+  const qs=new URLSearchParams(location.search);
+  const DEFAULT_KEY='M0ySVA.pJLtkQ:SQP5uiSTbYG8Q7YbpWxq_T_YS5LcALRE5KXktyfOl5Y';
+  const CHANNEL = qs.get('chan') || 'diamond-feed'; // можно ?chan=tma
+  let ab=null,ch=null;
+
+  const ready = (async()=>{
+    try{
+      ab=new Ably.Realtime.Promise(DEFAULT_KEY);
+      ch=ab.channels.get(CHANNEL);
+
+      /* 1) подтягиваем историю (если включили Persist messages в Ably) */
+      try{
+        const page = await ch.history({limit:300});
+        const items = page?.items||[];
+        for(let i=items.length-1;i>=0;i--){
+          const m=items[i];
+          const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts:Date.parse(m.timestamp)||Date.now() };
+          listeners.forEach(fn=> fn(data, true)); // true = fromHistory
+        }
+      }catch(e){ console.warn('No history or not enabled:', e.message); }
+
+      /* 2) подписка на live */
+      ch.subscribe((msg)=>{
+        const data = msg.data && msg.data.type ? msg.data : { type: msg.name, payload: msg.data, ts: Date.now() };
+        listeners.forEach(fn=> fn(data, false));
+      });
+    }catch(e){
+      console.error('Ably init failed', e);
+      toast('Ably не подключился. Работает только локально.','err');
+    }
+  })();
+
+  return {
+    ready, send:(type,payload)=>{ const msg={type,payload,ts:Date.now()}; if(ch) try{ ch.publish(type,msg);}catch(e){}; },
+    on:(fn)=> listeners.add(fn)
+  };
+})();
+
+/* State */
+let state={
+  users:{}, current:null, posts:[],
+  pool:{ amt:0, epochEnds:epochEnd() },
+  pin:{ active:null, queue:[] },
+  social:{ following:{}, followers:{} },
+  presence:{}
+};
+const LS='df-v20';
+const save=()=>localStorage.setItem(LS, JSON.stringify(state,(k,v)=>v instanceof Date?{__d:v.toISOString()}:v));
+const revive=(o)=>{ if(!o||typeof o!=='object') return o; if(o.__d) return new Date(o.__d); for(const k in o) o[k]=revive(o[k]); return o; };
+const load=()=>{ const raw=localStorage.getItem(LS); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ return false; }};
+
+/* User */
+function initUser(){
+  const u=Telegram?.WebApp?.initDataUnsafe?.user;
+  const id=String(u.id);
+  if(!state.users[id]){
+    state.users[id]={id, firstName:u.first_name||'User', lastName:u.last_name||'', username:u.username||('user'+id), diamonds:300, isPremium:!!u.is_premium};
+  }
+  state.current=id;
+  state.social.following[id] ||= [];
+  state.social.followers[id] ||= [];
+}
+const avatar=(u)=> (u.firstName||u.username||'U').slice(0,1).toUpperCase();
+const nameOf=(u)=> u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : (u.firstName || '@'+u.username);
+
+/* Economy */
 function spend(uid,amt){ const u=state.users[uid]; if(!u||u.diamonds<amt) return false; u.diamonds-=amt; state.pool.amt+=amt; return true; }
 function publish(uid,text){ const p={id:String(Date.now()+Math.random()), authorId:uid, text, createdAt:new Date(), views:0, likes:0, boostedAt:null}; state.posts.unshift(p); return p; }
 
-/* ---- actions ---- */
+/* Actions */
 function createPostFlow(){
   const txt=byId('post-txt').value.trim();
   if(!txt){ toast('Введите текст','err'); return; }
   if(/https?:\/\//i.test(txt)){ toast('Ссылки запрещены в MVP','err'); return; }
   if(txt.length>500){ toast('Слишком длинно','err'); return; }
-  if(!spend(state.current, ECON.COST_POST)){ toast('Недостаточно алмазов','err'); go('store-section'); return; }
-  const p=publish(state.current,txt); save();
-  hide(byId('m-create')); byId('post-txt').value=''; renderAll(); RT.send('post:new',{post:serPost(p)}); toast('Пост опубликован!');
+  if(!spend(state.current, 10)){ toast('Недостаточно алмазов','err'); go('store-section'); return; }
+  const p=publish(state.current, txt);
+  hide(byId('m-create')); byId('post-txt').value='';
+  save(); renderAll();
+  RT.send('post:new', { post: serPost(p) });
+  toast('Пост опубликован!');
 }
 function like(postId){
   const p=state.posts.find(x=>x.id===postId); if(!p) return;
-  if(p.authorId===state.current) return; // нельзя лайкать своё
-  p.likes++; p.views++; save(); renderFeed(); RT.send('post:stats',{id:p.id, likes:p.likes, views:p.views});
+  if(p.authorId===state.current) return;
+  p.likes++; p.views++; save(); renderFeed();
+  RT.send('post:stats',{ id:p.id, likes:p.likes, views:p.views });
 }
-
-/* ---- pin/boost ---- */
 let currentPostId=null;
-function openBoost(id){ currentPostId=id; const p=state.posts.find(x=>x.id===id); const left=p?.boostedAt?(p.boostedAt.getTime()+ECON.BOOST_CD - Date.now()):0; byId('boost-hint').textContent=left>0?`Доступно через ${fmt(left)}`:''; show(byId('m-boost')); }
+function openBoost(id){ currentPostId=id; const p=state.posts.find(x=>x.id===id); const left=p?.boostedAt?(p.boostedAt.getTime()+5*60*1000 - Date.now()):0; byId('boost-hint').textContent=left>0?`Доступно через ${fmt(left)}`:''; show(byId('m-boost')); }
 function doBoost(){ const p=state.posts.find(x=>x.id===currentPostId); if(!p) return; if(p.authorId!==state.current){ toast('Только автор','err'); return; }
-  const left=p.boostedAt?(p.boostedAt.getTime()+ECON.BOOST_CD - Date.now()):0; if(left>0){ toast('Кулдаун 5 минут','err'); return; }
-  if(!spend(state.current, ECON.COST_BOOST)){ toast('Нет алмазов','err'); go('store-section'); hide(byId('m-boost')); return; }
-  p.boostedAt=new Date(); save(); hide(byId('m-boost')); renderAll(); RT.send('post:boost',{id:p.id, boostedAt:p.boostedAt.toISOString()}); toast('Пост поднят');
+  const left=p.boostedAt?(p.boostedAt.getTime()+5*60*1000 - Date.now()):0; if(left>0){ toast('Кулдаун 5 минут','err'); return; }
+  if(!spend(state.current,10)){ toast('Нет алмазов','err'); hide(byId('m-boost')); go('store-section'); return; }
+  p.boostedAt=new Date(); save(); hide(byId('m-boost')); renderAll();
+  RT.send('post:boost',{ id:p.id, boostedAt:p.boostedAt.toISOString() });
+  toast('Пост поднят');
 }
 function openPin(id){ currentPostId=id; show(byId('m-pin')); }
 function doPin(){
   const id=currentPostId; const p=state.posts.find(x=>x.id===id); if(!p) return; if(p.authorId!==state.current){ toast('Только автор','err'); return; }
-  if(!spend(state.current, ECON.COST_PIN)){ toast('Нет алмазов','err'); go('store-section'); hide(byId('m-pin')); return; }
+  if(!spend(state.current,100)){ toast('Нет алмазов','err'); hide(byId('m-pin')); go('store-section'); return; }
   const plus=60*1000;
   if(state.pin.active && state.pin.active.postId===id){ state.pin.active.endsAt=new Date(state.pin.active.endsAt.getTime()+plus); }
   else if(!state.pin.active){ state.pin.active={postId:id, endsAt:new Date(Date.now()+plus)}; }
-  else { state.pin.queue.push({postId:id, userId:state.current, minutes:1, at:new Date()}); }
-  save(); hide(byId('m-pin')); renderAll(); RT.send('pin:update', serPin()); toast('Закреплено');
-}
-function serPin(){ return {active: state.pin.active? {postId:state.pin.active.postId, endsAt:state.pin.active.endsAt.toISOString()}:null,
-                           queue: state.pin.queue.map(q=>({...q, at:q.at.toISOString()}))}; }
-function pinTick(){
-  if(!state.pin.active) return;
-  const left=state.pin.active.endsAt.getTime()-Date.now();
-  if(left<=0){
-    const next=state.pin.queue.shift();
-    if(next){ state.pin.active={postId:next.postId, endsAt:new Date(Date.now()+next.minutes*60*1000)}; }
-    else state.pin.active=null;
-    save(); renderAll(); RT.send('pin:update', serPin());
-  }
+  else { (state.pin.queue ||= []).push({postId:id,userId:state.current,minutes:1,at:new Date()}); }
+  save(); hide(byId('m-pin')); renderAll();
+  RT.send('pin:update', serPin());
+  toast('Закреплено');
 }
 
-/* ---- render ---- */
+/* Presence (минимально) */
+setInterval(()=>{ const uid=state.current; state.presence[uid]=Date.now(); RT.send('presence:ping',{uid}); }, 5000);
+function isOnline(uid){ const t=state.presence[uid]||0; return Date.now()-t<30000; }
+
+/* Render */
 function renderHUD(){
-  const u=state.users[state.current]; byId('bal').textContent=(u?.diamonds||0);
+  const u=state.users[state.current]; byId('bal').textContent=u?.diamonds||0;
   const left=state.pool.epochEnds.getTime()-Date.now();
-  byId('eta').textContent=fmt(left);
-  byId('prog').style.width=`${Math.max(0, Math.min(1, 1-(left/(24*3600*1000))))*100}%`;
-
-  // профиль
-  if(u){ byId('pf-ava').textContent=avatar(u); byId('pf-name').textContent=nameOf(u); byId('pf-id').textContent='ID: '+u.id; byId('pf-d').textContent=u.diamonds; }
-  const myPosts=state.posts.filter(p=>p.authorId===state.current).length; byId('pf-p').textContent=myPosts;
+  byId('eta').textContent=fmt(left); byId('prog').style.width=`${Math.max(0,Math.min(1,1-(left/(24*3600*1000))))*100}%`;
   byId('pool-amt').textContent=state.pool.amt.toFixed(2);
+
+  // profile
+  if(u){ byId('pf-ava').textContent=avatar(u); byId('pf-name').textContent=nameOf(u); byId('pf-id').textContent='ID: '+u.id; byId('pf-d').textContent=u.diamonds; }
+  byId('pf-p').textContent=state.posts.filter(p=>p.authorId===state.current).length;
 }
-function escapeHtml(s){return s.replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function renderFeed(){
   const feed=byId('feed'); const uid=state.current;
-  const items=[...state.posts].sort((a,b)=> (b.boostedAt?b.boostedAt.getTime():0) - (a.boostedAt?a.boostedAt.getTime():0) || b.createdAt.getTime()-a.createdAt.getTime());
-  const following=state.social.following[uid]||new Set();
-  const filterFriends = byId('tab-friends').dataset.active==='1';
-  const list = filterFriends? items.filter(p=> p.authorId===uid || following.has(p.authorId)) : items;
+  const items=[...state.posts].sort((a,b)=> (b.boostedAt?b.boostedAt.getTime():0)-(a.boostedAt?a.boostedAt.getTime():0) || b.createdAt.getTime()-a.createdAt.getTime());
+  const friendsOn = byId('tab-friends').dataset.active==='1';
+  const following = new Set(state.social.following[uid]||[]);
+  const list = friendsOn ? items.filter(p=> p.authorId===uid || following.has(p.authorId)) : items;
 
   feed.innerHTML = list.map(p=>{
-    const a=state.users[p.authorId]||{firstName:'User'}; const mine=p.authorId===uid;
-    const online = (Date.now()-(state.presence?.[p.authorId]||0) < 30000);
+    const a=state.users[p.authorId]||{firstName:'User'};
     return `
     <article class="card" data-id="${p.id}">
       <div class="row">
         <div class="user">
-          <div class="avatar">${avatar(a)}${online?'<span class="dot online"></span>':''}</div>
+          <div class="avatar">${avatar(a)}${isOnline(p.authorId)?'<span class="dot online"></span>':''}</div>
           <div>
-            <div class="name">${nameOf(a)} ${a.isPremium?'<i class="fa-solid fa-star" style="color:var(--ok)"></i>':''} ${mine?'<span class="muted">(Вы)</span>':''}</div>
+            <div class="name">${nameOf(a)} ${a.isPremium?'<i class="fa-solid fa-star" style="color:var(--ok)"></i>':''} ${p.authorId===uid?'<span class="muted">(Вы)</span>':''}</div>
             <div class="meta">${p.createdAt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${p.boostedAt? ' • <span class="badge rocket"><i class="fa-solid fa-rocket"></i> Boost</span>':''}</div>
           </div>
         </div>
-        <div><button class="btn" onclick="openPin('${p.id}')" ${!mine?'disabled':''}><i class="fa-solid fa-thumbtack"></i></button></div>
+        <div><button class="btn" onclick="openPin('${p.id}')" ${p.authorId!==uid?'disabled':''}><i class="fa-solid fa-thumbtack"></i></button></div>
       </div>
-      <div class="content">${escapeHtml(p.text)}</div>
+      <div class="content">${esc(p.text)}</div>
       <div class="stats"><span><i class="fa-regular fa-eye"></i> ${p.views}</span><span><i class="fa-regular fa-heart"></i> ${p.likes}</span></div>
       <div class="actions">
-        <button class="btn like" ${mine?'disabled':''} onclick="like('${p.id}')"><i class="fa-regular fa-heart"></i> Лайк</button>
-        <button class="btn" ${!mine?'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст</button>
-        <button class="btn" ${mine?'disabled':''} onclick="follow('${uid}','${p.authorId}')"><i class="fa-solid fa-user-plus"></i> Др</button>
+        <button class="btn like" ${p.authorId===uid?'disabled':''} onclick="like('${p.id}')"><i class="fa-regular fa-heart"></i> Лайк</button>
+        <button class="btn" ${p.authorId!==uid?'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст</button>
+        <button class="btn" ${p.authorId===uid?'disabled':''} onclick="follow('${uid}','${p.authorId}')"><i class="fa-solid fa-user-plus"></i> Др</button>
       </div>
     </article>`;
   }).join('');
@@ -469,8 +466,13 @@ function renderFeed(){
   renderPin();
 }
 function renderPin(){
-  const w=byId('pin-wrap'); if(!state.pin.active){ w.style.display='none'; return; }
-  const p=state.posts.find(x=>x.id===state.pin.active.postId); if(!p){ w.style.display='none'; return; }
+  const w=byId('pin-wrap');
+  if(!state.pin.active){ w.style.display='none'; return; }
+  const p=state.posts.find(x=>x.id===state.pin.active.postId);
+  if(!p){
+    // авто-снятие "мертвого" закрепа (пост отсутствует)
+    state.pin.active=null; save(); RT.send('pin:update', serPin()); w.style.display='none'; return;
+  }
   const a=state.users[p.authorId]||{firstName:'User'};
   w.style.display='block';
   byId('pin-author').textContent=nameOf(a); byId('pin-text').textContent=p.text;
@@ -480,60 +482,77 @@ function renderPin(){
 }
 function renderFriends(){
   const uid=state.current;
-  const flw=[...(state.social.following[uid]||new Set())].map(id=> (state.users[id]?nameOf(state.users[id]):id) + ` <a href="#" onclick="unfollow('${uid}','${id}');return false">(удалить)</a>`).join('<br/>') || '—';
-  const fol=[...(state.social.followers[uid]||new Set())].map(id=> state.users[id]?nameOf(state.users[id]):id).join('<br/>') || '—';
+  const flw=[...(state.social.following[uid]||[])].map(id=> (state.users[id]?nameOf(state.users[id]):id) + ` <a href="#" onclick="unfollow('${uid}','${id}');return false">(удалить)</a>`).join('<br/>') || '—';
+  const fol=[...(state.social.followers[uid]||[])].map(id=> state.users[id]?nameOf(state.users[id]):id).join('<br/>') || '—';
   byId('following').innerHTML=flw; byId('followers').innerHTML=fol;
 }
 function renderAll(){ renderHUD(); renderFeed(); renderFriends(); }
 
-/* ---- friends ---- */
+/* Friends */
 function follow(me,to){
   if(me===to) return false;
-  state.social.following[me] ||= new Set();
-  state.social.followers[to]  ||= new Set();
-  if(state.social.following[me].has(to)) return false;
-  state.social.following[me].add(to); state.social.followers[to].add(me);
+  state.social.following[me] ||= [];
+  state.social.followers[to]  ||= [];
+  if(state.social.following[me].includes(to)) return false;
+  state.social.following[me].push(to); state.social.followers[to].push(me);
   save(); renderFriends(); toast('Добавлен в друзья'); RT.send('social:follow',{from:me,to});
 }
 function unfollow(me,to){
-  if(!state.social.following[me]?.has(to)) return false;
-  state.social.following[me].delete(to); state.social.followers[to]?.delete(me);
+  state.social.following[me] = (state.social.following[me]||[]).filter(x=>x!==to);
+  state.social.followers[to]  = (state.social.followers[to]||[]).filter(x=>x!==me);
   save(); renderFriends(); toast('Удалён из друзей','info'); RT.send('social:unfollow',{from:me,to});
 }
 
-/* ---- serialize ---- */
+/* Serialize */
 function serPost(p){ return {...p, createdAt:p.createdAt.toISOString(), boostedAt:p.boostedAt? p.boostedAt.toISOString():null}; }
 function dePost(p){ return {...p, createdAt:new Date(p.createdAt), boostedAt:p.boostedAt? new Date(p.boostedAt):null}; }
+function serPin(){ return { active: state.pin.active ? {postId:state.pin.active.postId, endsAt:state.pin.active.endsAt.toISOString()} : null, queue: [] }; }
 
-/* ---- presence (минимально) ---- */
-state.presence={};
-setInterval(()=>{ const uid=state.current; state.presence[uid]=Date.now(); RT.send('presence:ping',{uid}); }, 5000);
+/* Pin timer & epoch rollover */
+function tick(){
+  const left=state.pool.epochEnds.getTime()-Date.now();
+  if(left<=0){ state.pool.epochEnds=epochEnd(); state.pool.amt=0; save(); }
+  if(state.pin.active && state.pin.active.endsAt.getTime()<=Date.now()){
+    state.pin.active=null; save(); RT.send('pin:update', serPin());
+  }
+  renderHUD(); renderPin();
+}
+setInterval(tick,1000);
 
-/* ---- events bus ---- */
-RT.on(evt=>{
+/* Realtime events */
+RT.on((evt,fromHistory)=>{
   if(!evt||!evt.type) return;
   switch(evt.type){
     case 'post:new':{
-      const p=dePost(evt.payload.post); state.users[p.authorId] ||= {id:p.authorId, firstName:'User '+p.authorId, username:'user'+p.authorId, diamonds:0};
+      const p=dePost(evt.payload.post);
+      // дедуп по id
       if(!state.posts.find(x=>x.id===p.id)){ state.posts.unshift(p); save(); renderFeed(); }
       break;
     }
     case 'post:stats':{
-      const {id,likes,views}=evt.payload; const p=state.posts.find(x=>x.id===id); if(p){ p.likes=Math.max(p.likes,likes); p.views=Math.max(p.views,views); save(); renderFeed(); }
+      const {id,likes,views}=evt.payload; const p=state.posts.find(x=>x.id===id);
+      if(p){ p.likes=Math.max(p.likes,likes); p.views=Math.max(p.views,views); save(); renderFeed(); }
       break;
     }
     case 'post:boost':{
-      const {id,boostedAt}=evt.payload; const p=state.posts.find(x=>x.id===id); if(p){ p.boostedAt=new Date(boostedAt); save(); renderFeed(); }
+      const {id,boostedAt}=evt.payload; const p=state.posts.find(x=>x.id===id);
+      if(p){ p.boostedAt=new Date(boostedAt); save(); renderFeed(); }
       break;
     }
     case 'pin:update':{
-      const d=evt.payload; state.pin.active=d.active? {postId:d.active.postId, endsAt:new Date(d.active.endsAt)}:null; state.pin.queue=[]; save(); renderPin(); break;
+      const d=evt.payload;
+      state.pin.active = d.active ? { postId:d.active.postId, endsAt:new Date(d.active.endsAt) } : null;
+      save(); renderPin(); break;
     }
     case 'social:follow':{
-      const {from,to}=evt.payload; state.social.followers[to] ||= new Set(); state.social.followers[to].add(from); renderFriends(); break;
+      const {from,to}=evt.payload;
+      state.social.followers[to] ||= []; if(!state.social.followers[to].includes(from)) state.social.followers[to].push(from);
+      renderFriends(); break;
     }
     case 'social:unfollow':{
-      const {from,to}=evt.payload; state.social.followers[to]?.delete(from); renderFriends(); break;
+      const {from,to}=evt.payload;
+      state.social.followers[to] = (state.social.followers[to]||[]).filter(x=>x!==from);
+      renderFriends(); break;
     }
     case 'presence:ping':{
       const {uid}=evt.payload; state.presence[uid]=Date.now(); break;
@@ -541,7 +560,7 @@ RT.on(evt=>{
   }
 });
 
-/* ---- UI wiring ---- */
+/* UI wiring */
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-close]')){ e.target.closest('.modal').style.display='none'; }
   const nav=e.target.closest('.nav button'); if(nav&&nav.dataset.go){ go(nav.dataset.go); }
@@ -561,14 +580,12 @@ byId('friend-add').onclick=()=>{
 };
 byId('to-friends').onclick=()=> go('friends-section'); byId('to-store').onclick=()=> go('store-section');
 
-/* ---- tickers ---- */
-setInterval(()=>{ renderHUD(); pinTick(); renderPin(); if(Date.now()>state.pool.epochEnds.getTime()){ state.pool.epochEnds=epochEnd(); state.pool.amt=0; save(); }}, 1000);
-
-/* ---- boot ---- */
+/* Boot */
 try{ if(!load()) initUser(); else initUser(); }catch(e){ console.error(e); }
 renderAll();
+RT.ready.finally(()=>{ /* абли готов/история подтянута; UI уже работал и до этого */ });
 
-} // end if !__STOP_APP__
+} // end !__STOP_APP__
 </script>
 </body>
 </html>
