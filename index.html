@@ -1,1540 +1,704 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diamond Feed</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-            color: #ffffff;
-            line-height: 1.5;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 0 16px 80px 16px;
-        }
-
-        /* Header */
-        .header {
-            background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 16px 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .balance-section {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .balance-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-        }
-
-        .points-card {
-            background: linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2));
-            border: 1px solid rgba(245, 87, 108, 0.3);
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-        }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-around;
-            z-index: 1000;
-        }
-
-        .nav-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 11px;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            min-width: 60px;
-        }
-
-        .nav-btn.active {
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .nav-btn i {
-            font-size: 18px;
-        }
-
-        /* Pinned Post */
-        .pinned-section {
-            margin: 16px 0;
-            background: rgba(26, 26, 26, 0.8);
-            border-radius: 20px;
-            padding: 0;
-            border: 2px solid #667eea;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-
-        .pinned-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            background: rgba(102, 126, 234, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .pinned-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .pinned-timer {
-            background: #667eea;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        /* Feed */
-        .feed {
-            margin: 16px 0;
-        }
-
-        .post-card {
-            background: rgba(26, 26, 26, 0.8);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .post-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .post-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .author-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .author-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-
-        .author-details {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .author-name {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .post-time {
-            color: #888;
-            font-size: 12px;
-        }
-
-        .post-content {
-            margin-bottom: 16px;
-            line-height: 1.6;
-            font-size: 15px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            max-width: 100%;
-        }
-
-        .post-stats {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            font-size: 12px;
-            color: #888;
-        }
-
-        .post-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            backdrop-filter: blur(10px);
-        }
-
-        .like-btn {
-            background: rgba(51, 51, 51, 0.8);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .like-btn.liked {
-            background: rgba(245, 87, 108, 0.2);
-            color: #f5576c;
-            border: 1px solid rgba(245, 87, 108, 0.3);
-        }
-
-        .boost-btn {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-            color: #667eea;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-        }
-
-        .pin-btn {
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.2));
-            color: #4ecdc4;
-            border: 1px solid rgba(78, 205, 196, 0.3);
-        }
-
-        .action-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .action-btn:not(:disabled):hover {
-            transform: translateY(-1px);
-        }
-
-        /* Create Post */
-        .create-post {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            border-radius: 50%;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
-            z-index: 999;
-            transition: all 0.3s ease;
-        }
-
-        .create-post:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(26, 26, 26, 0.95);
-            padding: 24px;
-            border-radius: 24px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 8px;
-            transition: background 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #888;
-            font-weight: 500;
-        }
-
-        .form-input, .form-textarea {
-            width: 100%;
-            padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            background: rgba(15, 15, 15, 0.8);
-            color: white;
-            font-size: 15px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 120px;
-            font-family: inherit;
-        }
-
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .cost-info {
-            text-align: center;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #888;
-        }
-
-        /* Store */
-        .packs-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .pack-card {
-            background: rgba(26, 26, 26, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .pack-card:hover {
-            transform: translateY(-2px);
-            border-color: #667eea;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
-        }
-
-        .pack-amount {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .pack-price {
-            font-size: 14px;
-            color: #888;
-        }
-
-        /* Profile */
-        .profile-section {
-            background: rgba(26, 26, 26, 0.8);
-            border-radius: 24px;
-            padding: 24px;
-            margin: 16px 0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-
-        .profile-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .profile-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .profile-id {
-            font-size: 13px;
-            color: #888;
-            margin-bottom: 8px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 24px 0;
-        }
-
-        .stat-card {
-            background: rgba(15, 15, 15, 0.8);
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #888;
-            font-weight: 500;
-        }
-
-        /* Pool Info */
-        .pool-info {
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.2));
-            padding: 24px;
-            border-radius: 20px;
-            margin: 16px 0;
-            text-align: center;
-            border: 1px solid rgba(78, 205, 196, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .pool-amount {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .pool-label {
-            font-size: 14px;
-            opacity: 0.9;
-            font-weight: 500;
-        }
-
-        /* Points notification */
-        .points-earned {
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.2));
-            color: #4ecdc4;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 8px;
-            border: 1px solid rgba(78, 205, 196, 0.3);
-        }
-
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Online indicator */
-        .online-indicator {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: rgba(76, 217, 100, 0.2);
-            color: #4cd964;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid rgba(76, 217, 100, 0.3);
-            backdrop-filter: blur(10px);
-            z-index: 999;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .online-dot {
-            width: 8px;
-            height: 8px;
-            background: #4cd964;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #888;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: #ccc;
-        }
-
-        .empty-state p {
-            font-size: 14px;
-            line-height: 1.5;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Diamond Feed • TMA v1.2</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root{
+      --bg:#0b0b0f;--bg-2:#12131a;--card:#141622;--muted:#99a2b3;--text:#f2f4f8;--brand:#7c8cff;--brand-2:#9a6bff;--ok:#43d6a3;--warn:#ffb84d;--err:#ff6b6b;
+      --ring: 0 0 0 2px rgba(124,140,255,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 600px at 20% 0%, rgba(124,140,255,.13), transparent 60%),
+      radial-gradient(900px 400px at 100% 0%, rgba(154,107,255,.12), transparent 60%),var(--bg);
+      color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,Roboto,Segoe UI,Arial,sans-serif;}
+    .container{max-width:720px;margin:0 auto;padding:0 16px 96px}
+
+    /* Header */
+    .header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(1.2) blur(12px);
+      background:linear-gradient(to bottom, rgba(10,10,16,.8), rgba(10,10,16,.6));border-bottom:1px solid rgba(255,255,255,.06)}
+    .header-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));
+      display:grid;place-items:center;box-shadow:0 10px 24px rgba(124,140,255,.35)}
+    .logo i{color:white}
+    .title{font-weight:800;letter-spacing:.2px}
+
+    .kpis{display:flex;gap:8px;align-items:center}
+    .pill{display:flex;gap:8px;align-items:center;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      padding:8px 12px;border-radius:14px;font-size:13px;font-weight:700;}
+    .pill i{opacity:.9}
+    .hint{color:var(--muted);font-size:12px}
+
+    /* Sections */
+    .section{display:none;animation:fade .25s ease}
+    .section.active{display:block}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Pinned */
+    .pinned{margin:16px 0;border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;background:linear-gradient(180deg,rgba(124,140,255,.14),rgba(124,140,255,.03));}
+    .pinned__head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed rgba(255,255,255,.12)}
+    .pinned__label{display:flex;gap:10px;align-items:center;color:var(--brand);font-weight:800}
+    .pinned__timer{display:flex;gap:8px;align-items:center;background:rgba(124,140,255,.25);border:1px solid rgba(124,140,255,.4);
+      padding:6px 10px;border-radius:10px;font-weight:800}
+    .pinned__body{padding:16px}
+    .pinned__meta{display:flex;gap:14px;color:var(--muted);font-size:13px;margin-top:8px}
+    .queue{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-top:8px}
+
+    /* Post card */
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    .card:hover{box-shadow:0 14px 44px rgba(0,0,0,.33)}
+    .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .user{display:flex;gap:12px;align-items:center}
+    .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;font-weight:800}
+    .name{font-weight:800}
+    .meta{color:var(--muted);font-size:12px;margin-top:2px}
+    .content{margin:12px 0 10px;line-height:1.55;font-size:15px}
+    .stats{display:flex;gap:14px;color:var(--muted);font-size:12px}
+
+    .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+    .btn{display:flex;gap:8px;align-items:center;justify-content:center;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer}
+    .btn:hover{box-shadow:var(--ring)}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}
+    .btn.like.liked{border-color:rgba(255,107,107,.35);background:linear-gradient(180deg, rgba(255,107,107,.18), rgba(255,255,255,.02));color:#ff7f88}
+    .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:12px}
+    .badge.rocket{color:var(--ok);border-color:rgba(67,214,163,.35);background:linear-gradient(180deg, rgba(67,214,163,.16), rgba(255,255,255,.02))}
+
+    /* Empty */
+    .empty{padding:48px 20px;text-align:center;color:var(--muted)}
+
+    /* Bottom nav */
+    .nav{position:fixed;left:0;right:0;bottom:0;backdrop-filter:blur(12px);background:linear-gradient(to top, rgba(10,10,16,.9), rgba(10,10,16,.6));
+      border-top:1px solid rgba(255,255,255,.06);padding:10px 8px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;z-index:60}
+    .nav button{border:none;background:none;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center;padding:8px 6px;border-radius:10px;font-size:11px}
+    .nav button.active{color:var(--brand);background:rgba(124,140,255,.14)}
+
+    /* Floating create */
+    .fab{position:fixed;right:16px;bottom:84px;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;border:none;cursor:pointer;
+      background:conic-gradient(from 180deg at 50% 50%, var(--brand) 0deg, var(--brand-2) 160deg, var(--brand) 360deg); color:white;
+      box-shadow:0 16px 44px rgba(124,140,255,.55);z-index:55}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:80}
+    .modal__card{width:min(92vw,420px);max-height:84vh;overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:var(--card);padding:18px}
+    .modal__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .modal__title{font-weight:800}
+    .close{border:none;background:none;color:var(--muted);font-size:20px;cursor:pointer}
+    .label{font-size:13px;color:var(--muted);margin:8px 0}
+    .input,.textarea,select{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0f111a;color:var(--text)}
+    .textarea{min-height:120px;resize:vertical}
+    .submit{width:100%;margin-top:10px}
+
+    /* Profile */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .stat{background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06);
+      border-radius:16px;padding:16px;text-align:center}
+    .stat .v{font-size:20px;font-weight:900}
+    .muted{color:var(--muted)}
+
+    .pool{margin:16px 0;padding:16px;border-radius:18px;border:1px solid rgba(67,214,163,.35);
+      background:linear-gradient(180deg, rgba(67,214,163,.16), rgba(67,214,163,.04))}
+
+    /* Tabs (leaderboard) */
+    .tabs{display:flex;gap:8px;margin:10px 0}
+    .tab{padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.03);cursor:pointer;color:var(--muted);font-weight:700}
+    .tab.active{color:var(--brand);box-shadow:var(--ring)}
+
+    /* Toast */
+    .toast{position:fixed;right:16px;top:86px;z-index:90;display:grid;gap:8px}
+    .toast .t{padding:12px 14px;border-radius:12px;color:#0b0b0f;font-weight:800}
+    .t.ok{background:#43d6a3}
+    .t.err{background:#ff7f88}
+    .t.info{background:#7c8cff}
+  </style>
 </head>
 <body>
-    <!-- Online Indicator -->
-    <div class="online-indicator">
-        <div class="online-dot"></div>
-        <span>Online</span>
-    </div>
+  <div class="toast" id="toast"></div>
 
+  <header class="header">
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="logo">💎 Diamond Feed</div>
-                <div class="balance-section">
-                    <div class="points-card">
-                        🏆 <span id="points-today">0</span>
-                    </div>
-                    <div class="balance-card">
-                        💎 <span id="diamond-balance">100</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Pinned Post Section -->
-        <section class="pinned-section" id="pinned-section" style="display: none;">
-            <div class="pinned-header">
-                <div class="pinned-label">
-                    <i class="fas fa-thumbtack"></i>
-                    Закреплено • <span id="pinned-author">Автор</span>
-                </div>
-                <div class="pinned-timer" id="pin-timer">01:00</div>
-            </div>
-            <div class="pinned-post-content" style="padding: 20px;">
-                <div class="post-content" id="pinned-content">Содержание закрепленного поста</div>
-                <div class="post-stats">
-                    <span><i class="far fa-eye"></i> <span id="pinned-views">0</span> просмотров</span>
-                    <span><i class="far fa-heart"></i> <span id="pinned-likes">0</span> лайков</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Feed Section -->
-        <section class="section active" id="feed-section">
-            <div class="feed" id="feed">
-                <div class="empty-state" id="feed-empty" style="display: none;">
-                    <i class="far fa-newspaper"></i>
-                    <h3>Лента пуста</h3>
-                    <p>Будьте первым, кто опубликует пост!</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Leaderboard Section -->
-        <section class="section" id="leaderboard-section">
-            <div class="leaderboard-list" id="leaderboard">
-                <div class="empty-state">
-                    <i class="fas fa-trophy"></i>
-                    <h3>Рейтинг пуст</h3>
-                    <p>Зарабатывайте баллы за реакции, чтобы подняться в рейтинге</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Profile Section -->
-        <section class="section" id="profile-section">
-            <div class="profile-section">
-                <div class="profile-header">
-                    <div class="profile-avatar" id="profile-avatar">U</div>
-                    <div class="profile-info">
-                        <div class="profile-name" id="profile-name">Пользователь</div>
-                        <div class="profile-id" id="profile-id">ID: 123456</div>
-                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888;">
-                            <i class="fas fa-shield-alt" style="color: #4ecdc4;"></i>
-                            <span>Подтвержден через Telegram</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="profile-diamonds">100</div>
-                        <div class="stat-label">Алмазов</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="profile-posts">0</div>
-                        <div class="stat-label">Постов</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="profile-reads">0</div>
-                        <div class="stat-label">Просмотров</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="profile-reactions">0</div>
-                        <div class="stat-label">Реакций</div>
-                    </div>
-                </div>
-
-                <div class="pool-info">
-                    <div class="pool-amount" id="estimated-reward">~0 💎</div>
-                    <div class="pool-label">Оценочная награда за сегодня</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Pool Section -->
-        <section class="section" id="pool-section">
-            <div class="pool-info">
-                <div class="pool-amount" id="current-pool">0 💎</div>
-                <div class="pool-label">Текущий пул наград</div>
-            </div>
-
-            <div class="profile-section">
-                <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 600;">Математика распределения</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="total-points">0</div>
-                        <div class="stat-label">Всего баллов</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="active-users">0</div>
-                        <div class="stat-label">Участников</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="your-points">0</div>
-                        <div class="stat-label">Ваши баллы</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="your-share">0%</div>
-                        <div class="stat-label">Ваша доля</div>
-                    </div>
-                </div>
-
-                <div style="background: rgba(15, 15, 15, 0.8); padding: 20px; border-radius: 16px; margin-top: 20px; border: 1px solid rgba(255, 255, 255, 0.05);">
-                    <h4 style="margin-bottom: 12px; font-size: 14px; color: #888; font-weight: 600;">Формула распределения:</h4>
-                    <div style="font-size: 13px; color: #ccc; line-height: 1.6;">
-                        <div style="margin-bottom: 8px;">• <strong>Доля</strong> = Ваши баллы ÷ Всего баллов</div>
-                        <div style="margin-bottom: 8px;">• <strong>Награда</strong> = Пул × Доля</div>
-                        <div style="margin-bottom: 8px;">• <strong>Баллы</strong> = +3 за каждую реакцию</div>
-                        <div>• <strong>Пул</strong> = сумма всех платных действий</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Create Post Button -->
-        <button class="create-post" onclick="openCreatePostModal()">
-            <i class="fas fa-plus"></i>
-        </button>
-    </div>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <button class="nav-btn active" onclick="showSection('feed')">
-            <i class="fas fa-home"></i>
-            <span>Лента</span>
-        </button>
-        <button class="nav-btn" onclick="showSection('leaderboard')">
-            <i class="fas fa-trophy"></i>
-            <span>Топ</span>
-        </button>
-        <button class="nav-btn" onclick="showSection('profile')">
-            <i class="fas fa-user"></i>
-            <span>Профиль</span>
-        </button>
-        <button class="nav-btn" onclick="showSection('pool')">
-            <i class="fas fa-coins"></i>
-            <span>Пул</span>
-        </button>
-        <button class="nav-btn" onclick="openStoreModal()">
-            <i class="fas fa-shopping-cart"></i>
-            <span>Магазин</span>
-        </button>
-    </nav>
-
-    <!-- Modals -->
-    <div class="modal" id="createPostModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Создать пост</div>
-                <button class="close-btn" onclick="closeCreatePostModal()">×</button>
-            </div>
-            <form onsubmit="createPost(event)">
-                <div class="form-group">
-                    <label class="form-label">Текст поста (до 500 символов)</label>
-                    <textarea class="form-textarea" id="postText" maxlength="500" placeholder="Поделитесь чем-то интересным..."></textarea>
-                </div>
-                <button type="submit" class="submit-btn">Опубликовать за 10 💎</button>
-                <div class="cost-info">Будет списано 10 алмазов</div>
-            </form>
+      <div class="header-row">
+        <div class="brand">
+          <div class="logo"><i class="fa-solid fa-gem"></i></div>
+          <div>
+            <div class="title">Diamond Feed</div>
+            <div class="hint">Эпоха заканчивается в <span id="epoch-utc">00:00 UTC</span> • осталось <span id="epoch-eta">--:--:--</span></div>
+          </div>
         </div>
-    </div>
-
-    <div class="modal" id="boostModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Буст поста</div>
-                <button class="close-btn" onclick="closeBoostModal()">×</button>
-            </div>
-            <p style="margin-bottom: 20px; font-size: 15px; color: #ccc; line-height: 1.5;">Поднять пост в топ ленты за 10 алмазов?</p>
-            <button class="submit-btn" onclick="boostPost()">Поднять за 10 💎</button>
-            <div class="cost-info">Будет списано 10 алмазов</div>
+        <div class="kpis">
+          <div class="pill"><i class="fa-solid fa-trophy"></i> <span id="points-pill">0 RAW / 0 EFF</span></div>
+          <div class="pill"><i class="fa-solid fa-sack-dollar"></i> <span id="reward-pill">~0 💎</span></div>
+          <div class="pill"><i class="fa-solid fa-gem"></i> <span id="balance-pill">0</span></div>
         </div>
+      </div>
     </div>
+  </header>
 
-    <div class="modal" id="pinModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Закрепить пост</div>
-                <button class="close-btn" onclick="closePinModal()">×</button>
+  <main class="container">
+    <!-- Pinned slot -->
+    <section class="pinned" id="pinned" style="display:none">
+      <div class="pinned__head">
+        <div class="pinned__label"><i class="fa-solid fa-thumbtack"></i> Закреплено • <span id="pin-author">—</span></div>
+        <div class="pinned__timer"><i class="fa-regular fa-clock"></i> <span id="pin-timer">01:00</span></div>
+      </div>
+      <div class="pinned__body">
+        <div id="pin-text" class="content"></div>
+        <div class="pinned__meta"><span><i class="fa-regular fa-eye"></i> <span id="pin-views">0</span></span>
+          <span><i class="fa-regular fa-heart"></i> <span id="pin-likes">0</span></span></div>
+        <div class="queue" id="pin-queue" style="display:none"><i class="fa-solid fa-list-ol"></i> В очереди: <span id="queue-len">0</span></div>
+        <div id="pin-cta" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- FEED -->
+    <section id="feed-section" class="section active">
+      <div id="feed"></div>
+      <div class="empty" id="feed-empty" style="display:none">
+        <i class="fa-regular fa-newspaper" style="font-size:42px"></i>
+        <div style="margin-top:8px">Лента пуста. Будьте первым, кто опубликует пост.</div>
+      </div>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section id="lb-section" class="section">
+      <div class="tabs">
+        <button class="tab active" data-epoch="current">Сегодня</button>
+        <button class="tab" data-epoch="prev">Вчера</button>
+      </div>
+      <div id="leaderboard"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="profile-section" class="section">
+      <div class="card">
+        <div class="row">
+          <div class="user">
+            <div class="avatar" id="pf-avatar">U</div>
+            <div>
+              <div class="name" id="pf-name">Пользователь</div>
+              <div class="meta" id="pf-id">ID: —</div>
+              <div class="meta"><i class="fa-solid fa-shield"></i> Подтвержден через Telegram</div>
             </div>
-            <p style="margin-bottom: 20px; font-size: 15px; color: #ccc; line-height: 1.5;">Закрепить пост на 1 минуту за 100 алмазов?</p>
-            <button class="submit-btn" onclick="pinPost()">Закрепить за 100 💎</button>
-            <div class="cost-info">Будет списано 100 алмазов</div>
+          </div>
         </div>
-    </div>
-
-    <div class="modal" id="storeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Покупка алмазов</div>
-                <button class="close-btn" onclick="closeStoreModal()">×</button>
-            </div>
-            <div class="packs-grid">
-                <div class="pack-card" onclick="buyDiamonds(100)">
-                    <div class="pack-amount">100 💎</div>
-                    <div class="pack-price">~1 TON</div>
-                </div>
-                <div class="pack-card" onclick="buyDiamonds(500)">
-                    <div class="pack-amount">500 💎</div>
-                    <div class="pack-price">~5 TON</div>
-                </div>
-                <div class="pack-card" onclick="buyDiamonds(1000)">
-                    <div class="pack-amount">1000 💎</div>
-                    <div class="pack-price">~10 TON</div>
-                </div>
-                <div class="pack-card" onclick="buyDiamonds(5000)">
-                    <div class="pack-amount">5000 💎</div>
-                    <div class="pack-price">~50 TON</div>
-                </div>
-            </div>
+        <div class="grid" style="margin-top:12px">
+          <div class="stat"><div class="v" id="pf-diamonds">0</div><div class="muted">Алмазов</div></div>
+          <div class="stat"><div class="v" id="pf-posts">0</div><div class="muted">Постов</div></div>
+          <div class="stat"><div class="v" id="pf-reads">0</div><div class="muted">Прочтений (RAW)</div></div>
+          <div class="stat"><div class="v" id="pf-reacts">0</div><div class="muted">Реакций (RAW)</div></div>
+          <div class="stat"><div class="v" id="pf-raw">0</div><div class="muted">Баллы (RAW)</div></div>
+          <div class="stat"><div class="v" id="pf-eff">0</div><div class="muted">Баллы (EFF)</div></div>
         </div>
+        <div class="pool">
+          <div style="font-weight:900">Оценочная награда сегодня</div>
+          <div class="name" id="pf-est">~0 💎</div>
+          <div class="muted">Прогноз при текущем пуле</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- POOL -->
+    <section id="pool-section" class="section">
+      <div class="pool">
+        <div class="name">Текущий пул: <span id="pool-amount">0</span> 💎</div>
+        <div class="muted">Участников (>= MIN_POINTS): <span id="pool-part">0</span></div>
+      </div>
+      <div class="card">
+        <div class="name">Математика распределения</div>
+        <div class="muted" style="margin-top:6px">Доля = Ваши баллы / ΣБаллов • Выплата = Пул × Доля • Округление до 0.01, «пыль» переносится на следующий день</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom nav -->
+  <nav class="nav">
+    <button class="active" data-go="feed-section"><i class="fa-solid fa-home"></i><span>Лента</span></button>
+    <button data-go="lb-section"><i class="fa-solid fa-ranking-star"></i><span>Топ</span></button>
+    <button data-go="profile-section"><i class="fa-solid fa-user"></i><span>Профиль</span></button>
+    <button data-go="pool-section"><i class="fa-solid fa-coins"></i><span>Пул</span></button>
+    <button id="open-store"><i class="fa-solid fa-store"></i><span>Магазин</span></button>
+  </nav>
+
+  <!-- FAB -->
+  <button class="fab" id="create-btn"><i class="fa-solid fa-plus"></i></button>
+
+  <!-- Modals -->
+  <div class="modal" id="modal-create">
+    <div class="modal__card">
+      <div class="modal__head"><div class="modal__title">Создать пост</div><button class="close" data-close>&times;</button></div>
+      <label class="label">Текст (до 500 символов, без ссылок)</label>
+      <textarea id="post-text" class="textarea" maxlength="500" placeholder="Поделитесь чем-то интересным…"></textarea>
+      <button id="post-submit" class="btn submit">Опубликовать за 10 💎</button>
+      <div class="muted" style="margin-top:6px">Будет списано 10 алмазов</div>
     </div>
+  </div>
 
-    <script>
-        // Enhanced state management with better math and online features
-        let state = {
-            currentUser: null,
-            users: {},
-            posts: [],
-            userPosts: {},
-            points: {},
-            pool: {
-                current: 0,
-                totalPoints: 0,
-                participants: 0,
-                epochEnds: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-            },
-            prices: {
-                post: 10,
-                boost: 10,
-                pin: 100
-            },
-            pinnedPost: null,
-            pinTimer: null,
-            onlineUsers: new Set()
-        };
+  <div class="modal" id="modal-boost">
+    <div class="modal__card">
+      <div class="modal__head"><div class="modal__title">Буст поста</div><button class="close" data-close>&times;</button></div>
+      <div class="label">Поднять пост в топ за 10 💎? (кулдаун 5 минут)</div>
+      <button id="boost-confirm" class="btn submit">Поднять за 10 💎</button>
+      <div class="muted" id="boost-hint"></div>
+    </div>
+  </div>
 
-        // Save state to localStorage
-        function saveState() {
-            const stateToSave = {
-                ...state,
-                onlineUsers: Array.from(state.onlineUsers), // Convert Set to Array
-                pinnedPost: state.pinnedPost,
-                pool: {
-                    ...state.pool,
-                    epochEnds: state.pool.epochEnds.getTime() // Convert Date to timestamp
-                },
-                posts: state.posts.map(post => ({
-                    ...post,
-                    createdAt: post.createdAt.getTime()
-                }))
-            };
-            localStorage.setItem('diamondFeedState', JSON.stringify(stateToSave));
+  <div class="modal" id="modal-pin">
+    <div class="modal__card">
+      <div class="modal__head"><div class="modal__title">Закрепить пост</div><button class="close" data-close>&times;</button></div>
+      <div class="label">1 минута закрепа = 100 💎. Если слот занят — ваш пост встанет в очередь FIFO. Повторные покупки продлевают время.</div>
+      <button id="pin-confirm" class="btn submit">В очередь / Закрепить за 100 💎</button>
+      <div class="muted">Списывается 100 алмазов за каждую минуту</div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-store">
+    <div class="modal__card">
+      <div class="modal__head"><div class="modal__title">Покупка алмазов</div><button class="close" data-close>&times;</button></div>
+      <label class="label">Способ оплаты</label>
+      <select id="pay-method"><option value="stars">Telegram Stars (iOS)</option><option value="ton">TON (Android/Desktop)</option></select>
+      <div class="grid" style="margin-top:10px">
+        <button class="btn" data-pack="100">100 💎 • ~1 TON</button>
+        <button class="btn" data-pack="500">500 💎 • ~5 TON</button>
+        <button class="btn" data-pack="1000">1000 💎 • ~10 TON</button>
+        <button class="btn" data-pack="5000">5000 💎 • ~50 TON</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Демо‑оплата: средства зачисляются мгновенно (эмуляция)</div>
+    </div>
+  </div>
+
+  <!-- Report modal (stub) -->
+  <div class="modal" id="modal-report">
+    <div class="modal__card">
+      <div class="modal__head"><div class="modal__title">Пожаловаться</div><button class="close" data-close>&times;</button></div>
+      <label class="label">Категория</label>
+      <select id="report-type"><option>Спам</option><option>NSFW</option><option>Мошенничество</option><option>Оскорбления</option></select>
+      <button id="report-send" class="btn submit">Отправить жалобу</button>
+      <div class="muted">Жалоба отправится модераторам (демо)</div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Constants per ТЗ ===== */
+    const ECONOMY = Object.freeze({
+      COST_POST: 10,
+      COST_BOOST: 10,
+      COST_PIN_PER_MIN: 100,
+      BOOST_COOLDOWN_MS: 5 * 60 * 1000,
+      POOL_SHARE: 1.0,
+      PLATFORM_FEE: 0,
+      MIN_POINTS: 5,
+      CAPS: { READS: 200, REACTS: 100, PER_AUTHOR: 20 }
+    });
+
+    /* ===== Helpers (time/epoch) ===== */
+    const now = () => new Date();
+    const toUtcYMD = (d = now()) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString().slice(0,10);
+    const epochEndsAt = () => new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()+1, 0,0,0));
+    const fmtClock = (ms) => {
+      if (ms < 0) ms = 0; const s = Math.floor(ms/1000);
+      const h = String(Math.floor(s/3600)).padStart(2,'0');
+      const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+      const ss = String(s%60).padStart(2,'0');
+      return `${h}:${m}:${ss}`;
+    }
+
+    /* ===== State ===== */
+    let state = {
+      users: {},
+      currentUserId: null,
+      posts: [], // {id, authorId, text, createdAt, views, likes, boostedAt}
+      interactions: {}, // interactions[epoch][userId][postId] = { read: true, react: true }
+      daily: {}, // daily[epoch][userId] = { reads:0, reacts:0, perAuthor: {authorId:count} }
+      points: {}, // points[epoch][userId] = { reads:0, reacts:0, raw:0, eff:0 }
+      trust: {}, // trust[userId] in [0.1..1.0]
+      pool: { amount: 0, dust: 0, participants: 0, epoch: toUtcYMD(), endsAt: epochEndsAt() },
+      pin: { active: null /* {postId, endsAt} */, queue: [] /* FIFO of {postId, userId, minutes, enqueuedAt} */ },
+      transactions: {}, // transactions[userId] = [{type, amount, meta, at}]
+      moderation: { reports: [] },
+      ui: { currentPostId: null }
+    };
+
+    const save = () => {
+      localStorage.setItem('diamond-feed-v12', JSON.stringify(state, (k,v)=> v instanceof Date ? {__t:'d',v:v.toISOString()}: v));
+    };
+    const reviveDates = (o)=>{
+      if (!o || typeof o !== 'object') return o;
+      if (o.__t==='d') return new Date(o.v);
+      for (const k of Object.keys(o)) o[k] = reviveDates(o[k]);
+      return o;
+    }
+    const load = () => {
+      const raw = localStorage.getItem('diamond-feed-v12');
+      if (!raw) return false;
+      try { const parsed = reviveDates(JSON.parse(raw)); state = parsed; return true; } catch(e){ console.warn(e); return false; }
+    }
+
+    /* ===== User bootstrap (Telegram or mock) ===== */
+    function initUser(){
+      let u = null;
+      try{ if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user){ u = Telegram.WebApp.initDataUnsafe.user; }}catch(e){}
+      if (!u){ u = { id: '1', first_name: 'Telegram', last_name:'User', username:'tg_user', is_premium:false } }
+      const id = String(u.id);
+      if (!state.users[id]){
+        state.users[id] = { id, firstName: u.first_name||'User', lastName: u.last_name||'', username: u.username||'user', isPremium: !!u.is_premium, diamonds: 250 };
+        state.trust[id] = 1.0;
+      }
+      state.currentUserId = id;
+
+      // some demo users and posts
+      if (Object.keys(state.users).length < 3){
+        const demos = [
+          {id:'2', firstName:'Алексей', username:'alexey_tg', isPremium:true, diamonds:420},
+          {id:'3', firstName:'Мария', username:'maria_tg', isPremium:false, diamonds:150},
+          {id:'4', firstName:'Дмитрий', username:'dmitry_tg', isPremium:true, diamonds:90},
+        ];
+        for (const du of demos){ state.users[du.id] = {...du}; state.trust[du.id] = 1.0 }
+        if (!state.posts.length){
+          publishPost('2', 'Добро пожаловать! Платные посты создают пул наград — читайте и реагируйте, чтобы заработать.');
+          publishPost('3', 'MVP: текст до 500 символов, без ссылок. Лайк = +3 балла, прочтение = +1.');
         }
+      }
+    }
 
-        // Load state from localStorage
-        function loadState() {
-            try {
-                const saved = localStorage.getItem('diamondFeedState');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    
-                    // Restore complex objects
-                    parsed.onlineUsers = new Set(parsed.onlineUsers || []);
-                    parsed.pool.epochEnds = new Date(parsed.pool.epochEnds);
-                    parsed.posts = parsed.posts.map(post => ({
-                        ...post,
-                        createdAt: new Date(post.createdAt)
-                    }));
-                    
-                    state = parsed;
-                    return true;
-                }
-            } catch (error) {
-                console.error('Error loading state:', error);
-            }
-            return false;
+    /* ===== Econ helpers ===== */
+    function spendDiamonds(userId, amount, meta){
+      const u = state.users[userId];
+      if (!u || u.diamonds < amount) return false;
+      u.diamonds -= amount;
+      // pool formation (after platform fee; share) — only for paid actions
+      const toPool = Math.floor(amount * ECONOMY.POOL_SHARE * (1-ECONOMY.PLATFORM_FEE));
+      state.pool.amount += toPool;
+      (state.transactions[userId] ||= []).push({type:'spend', amount, meta, at: now()});
+      return true;
+    }
+
+    /* ===== Posts ===== */
+    function publishPost(authorId, text){
+      const post = { id: String(Date.now()+Math.random()), authorId, text, createdAt: now(), views: 0, likes: 0, boostedAt: null };
+      state.posts.unshift(post);
+      return post;
+    }
+
+    function createPostFlow(){
+      const text = document.getElementById('post-text').value.trim();
+      if (!text){ toast('Введите текст поста', 'err'); return; }
+      if (/https?:\/\//i.test(text)){ toast('Ссылки запрещены в MVP', 'err'); return; }
+      if (text.length>500){ toast('Слишком длинно', 'err'); return; }
+      if (!spendDiamonds(state.currentUserId, ECONOMY.COST_POST, {op:'post'})){
+        toast('Недостаточно алмазов', 'err'); openStore(); return;
+      }
+      const p = publishPost(state.currentUserId, text);
+      closeModal('modal-create');
+      document.getElementById('post-text').value='';
+      renderAll(); save();
+      toast('Пост опубликован!');
+    }
+
+    /* ===== Boost (cooldown) ===== */
+    function openBoost(postId){ state.ui.currentPostId = postId; const modal = byId('modal-boost');
+      const post = state.posts.find(p=>p.id===postId);
+      const cdLeft = post.boostedAt ? (post.boostedAt.getTime()+ECONOMY.BOOST_COOLDOWN_MS - now().getTime()) : 0;
+      byId('boost-hint').textContent = cdLeft>0 ? `Доступно через ${fmtClock(cdLeft)}` : '';
+      showModal(modal);
+    }
+    function doBoost(){
+      const post = state.posts.find(p=>p.id===state.ui.currentPostId);
+      if (!post) return;
+      if (post.authorId !== state.currentUserId){ toast('Бустить может только автор (MVP)', 'err'); return; }
+      const cdLeft = post.boostedAt ? (post.boostedAt.getTime()+ECONOMY.BOOST_COOLDOWN_MS - now().getTime()) : 0;
+      if (cdLeft>0){ toast('Рано: кулдаун 5 минут', 'err'); return; }
+      if (!spendDiamonds(state.currentUserId, ECONOMY.COST_BOOST, {op:'boost', postId:post.id})){
+        toast('Недостаточно алмазов', 'err'); closeModal('modal-boost'); openStore(); return;
+      }
+      post.boostedAt = now();
+      closeModal('modal-boost');
+      renderAll(); save();
+      toast('Пост поднят в топ');
+    }
+
+    /* ===== Pin (single slot + FIFO queue; multiply extends) ===== */
+    function openPin(postId){ state.ui.currentPostId = postId; showModal(byId('modal-pin')); }
+    function doPin(){
+      const postId = state.ui.currentPostId; const post = state.posts.find(p=>p.id===postId); if (!post) return;
+      if (post.authorId !== state.currentUserId){ toast('Закрепляет только автор (MVP)', 'err'); return; }
+      if (!spendDiamonds(state.currentUserId, ECONOMY.COST_PIN_PER_MIN, {op:'pin', postId})){
+        toast('Недостаточно алмазов', 'err'); closeModal('modal-pin'); openStore(); return;
+      }
+      // If active pin is this post — extend 1 minute. If it's in queue last — extend. Else enqueue or take slot if free
+      const plusMs = 60*1000;
+      if (state.pin.active && state.pin.active.postId===postId){ state.pin.active.endsAt = new Date(state.pin.active.endsAt.getTime()+plusMs); }
+      else if (state.pin.queue.length && state.pin.queue[state.pin.queue.length-1].postId===postId){ state.pin.queue[state.pin.queue.length-1].minutes += 1; }
+      else if (!state.pin.active){ state.pin.active = { postId, endsAt: new Date(now().getTime()+plusMs) } }
+      else { state.pin.queue.push({ postId, userId: state.currentUserId, minutes: 1, enqueuedAt: now() }); }
+      closeModal('modal-pin'); renderAll(); save(); toast('Покупка закрепа успешна');
+    }
+
+    function pinTicker(){
+      if (!state.pin.active) return;
+      const left = state.pin.active.endsAt.getTime()-now().getTime();
+      if (left <= 0){
+        // advance queue
+        const next = state.pin.queue.shift();
+        if (next){ state.pin.active = { postId: next.postId, endsAt: new Date(now().getTime() + next.minutes*60*1000) } }
+        else { state.pin.active = null }
+        renderAll(); save();
+      }
+    }
+
+    /* ===== Reads (+1) with 50% visibility & 2s dwell, active tab ===== */
+    const readWatch = new Map(); // postId -> { seenAt }
+    let visibilityOk = document.visibilityState==='visible';
+    window.addEventListener('visibilitychange', ()=> visibilityOk = document.visibilityState==='visible');
+    window.addEventListener('focus', ()=> visibilityOk=true);
+    window.addEventListener('blur', ()=> visibilityOk=false);
+
+    function ensureEpochStructures(ep){
+      state.interactions[ep] ||= {}; state.daily[ep] ||= {}; state.points[ep] ||= {};
+      const uid = state.currentUserId;
+      state.interactions[ep][uid] ||= {}; state.daily[ep][uid] ||= { reads:0, reacts:0, perAuthor:{} };
+      state.points[ep][uid] ||= { reads:0, reacts:0, raw:0, eff:0 };
+    }
+
+    function grantRead(post){
+      const ep = state.pool.epoch; ensureEpochStructures(ep);
+      const uid = state.currentUserId; const authorId = post.authorId;
+      if (authorId===uid) return; // self-read ignored
+      const caps = state.daily[ep][uid];
+      if (caps.reads >= ECONOMY.CAPS.READS) return;
+      const fromAuthor = (caps.perAuthor[authorId]||0);
+      if (fromAuthor >= ECONOMY.CAPS.PER_AUTHOR) return;
+      const inter = state.interactions[ep][uid][post.id] ||= { read:false, react:false };
+      if (inter.read) return; // unique
+      inter.read = true;
+      caps.reads += 1; caps.perAuthor[authorId] = fromAuthor + 1;
+      const p = state.points[ep][uid]; p.reads += 1; p.raw += 1; p.eff = Math.round(p.raw*(state.trust[uid]||1.0));
+      post.views += 1;
+      save(); renderHUD();
+    }
+
+    function grantReact(post){
+      const ep = state.pool.epoch; ensureEpochStructures(ep);
+      const uid = state.currentUserId; const authorId = post.authorId;
+      if (authorId===uid) return; // self-react ignored
+      const caps = state.daily[ep][uid];
+      if (caps.reacts >= ECONOMY.CAPS.REACTS) return;
+      const fromAuthor = (caps.perAuthor[authorId]||0);
+      if (fromAuthor >= ECONOMY.CAPS.PER_AUTHOR) return;
+      const inter = state.interactions[ep][uid][post.id] ||= { read:false, react:false };
+      if (inter.react) return; // unique
+      inter.react = true;
+      caps.reacts += 1; caps.perAuthor[authorId] = fromAuthor + 1;
+      const p = state.points[ep][uid]; p.reacts += 1; p.raw += 3; p.eff = Math.round(p.raw*(state.trust[uid]||1.0));
+      post.likes += 1;
+      save(); renderAll(); toast('+3 балла!', 'ok');
+    }
+
+    function attachReadObserver(){
+      const options = { root:null, rootMargin:'0px', threshold:[0, .5, 1] };
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries){ const el = e.target; const postId = el.dataset.postId; const halfVisible = e.intersectionRatio >= .5;
+          if (halfVisible){ readWatch.set(postId, { seenAt: now() }); } else { readWatch.delete(postId); }
         }
+      }, options);
+      document.querySelectorAll('.card[data-post-id]').forEach(el=> io.observe(el));
+      // dwell checker
+      setInterval(()=>{
+        if (!visibilityOk) return;
+        for (const [postId, ctx] of readWatch){ if (now().getTime()-ctx.seenAt.getTime() >= 2000){
+            const post = state.posts.find(p=>p.id===postId); if (post){ grantRead(post); readWatch.delete(postId); }
+        }}
+      }, 600);
+    }
 
-        // Initialize app
-        function initApp() {
-            // Try to load saved state
-            const hasSavedState = loadState();
-            
-            // Initialize with current user if not loaded
-            if (!state.currentUser) {
-                const mockUser = {
-                    id: '1',
-                    firstName: 'Telegram',
-                    lastName: 'User',
-                    username: 'tg_user',
-                    isPremium: false,
-                    diamonds: 100
-                };
-                handleUserLogin(mockUser);
-            }
+    /* ===== Epoch settlement (reward distribution) ===== */
+    function settlementTick(){
+      if (now().getTime() < state.pool.endsAt.getTime()) return;
+      // close epoch
+      const ep = state.pool.epoch; const nextEp = toUtcYMD(new Date(state.pool.endsAt));
+      const points = state.points[ep]||{}; const eligible = Object.entries(points).filter(([uid,p])=> (p.eff||0) > ECONOMY.MIN_POINTS);
+      const sumEff = eligible.reduce((s, [,p])=> s + (p.eff||0), 0);
+      let poolTotal = state.pool.amount + (state.pool.dust||0);
+      const payouts = [];
+      let used = 0;
+      if (sumEff>0 && poolTotal>0){
+        for (const [uid,p] of eligible){ const share = p.eff / sumEff; let amt = poolTotal * share; amt = Math.floor(amt*100)/100; used += amt; payouts.push([uid, amt]); }
+      }
+      const dust = Math.max(0, poolTotal - used);
+      // credit users
+      for (const [uid,amt] of payouts){ state.users[uid].diamonds = (state.users[uid].diamonds||0) + amt; (state.transactions[uid] ||= []).push({type:'reward', amount: amt, meta:{epoch:ep}, at: now()}); }
+      // prep next epoch
+      state.pool = { amount: 0, dust: dust, participants: 0, epoch: nextEp, endsAt: epochEndsAt() };
+      state.pin = state.pin; // keep pin as is (doesn't reset at epoch)
+      // keep points but rendering switches to current
+      renderAll(); save(); toast('Эпоха закрыта. Выплаты начислены.', 'ok');
+    }
 
-            // Add some demo users if none exist
-            if (Object.keys(state.users).length === 0) {
-                initializeDemoUsers();
-            }
+    /* ===== Rendering ===== */
+    const byId = (id)=> document.getElementById(id);
 
-            // Mark current user as online
-            if (state.currentUser) {
-                state.onlineUsers.add(state.currentUser.id);
-            }
+    function renderHUD(){
+      const uid = state.currentUserId; const user = state.users[uid];
+      const ep = state.pool.epoch; const P = state.points[ep]?.[uid] || {raw:0, eff:0};
+      byId('balance-pill').textContent = user.diamonds;
+      byId('points-pill').textContent = `${P.raw||0} RAW / ${P.eff||0} EFF`;
+      const est = estimateReward(uid);
+      byId('reward-pill').textContent = `~${est} 💎`;
+      byId('epoch-utc').textContent = '24:00 UTC';
+      byId('epoch-eta').textContent = fmtClock(state.pool.endsAt.getTime()-now().getTime());
 
-            renderAll();
-            startBackgroundServices();
-            saveState();
-        }
+      // profile
+      byId('pf-avatar').textContent = avatarText(user);
+      byId('pf-name').textContent = displayName(user);
+      byId('pf-id').textContent = `ID: ${user.id}`;
+      byId('pf-diamonds').textContent = user.diamonds;
+      const stats = state.points[ep]?.[uid] || {reads:0, reacts:0, raw:0, eff:0};
+      byId('pf-reads').textContent = stats.reads||0; byId('pf-reacts').textContent = stats.reacts||0;
+      byId('pf-raw').textContent = stats.raw||0; byId('pf-eff').textContent = stats.eff||0;
+      byId('pf-posts').textContent = state.posts.filter(p=>p.authorId===uid).length;
+      byId('pf-est').textContent = `~${est} 💎`;
 
-        function handleUserLogin(user) {
-            const userId = user.id;
-            
-            if (!state.users[userId]) {
-                state.users[userId] = {
-                    ...user,
-                    diamonds: 100,
-                    trust: 1.0,
-                    joinedAt: new Date()
-                };
-                
-                state.points[userId] = { reads: 0, reactions: 0, effective: 0 };
-                state.userPosts[userId] = {};
-            }
-            
-            state.currentUser = state.users[userId];
-            state.onlineUsers.add(userId);
-        }
+      // pool screen
+      byId('pool-amount').textContent = (state.pool.amount + (state.pool.dust||0)).toFixed(2);
+      const eligible = Object.values(state.points[ep]||{}).filter(p=> (p.eff||0) > ECONOMY.MIN_POINTS).length; byId('pool-part').textContent = eligible;
+    }
 
-        function initializeDemoUsers() {
-            const demoUsers = [
-                { id: '2', firstName: 'Алексей', username: 'alexey_tg', isPremium: true, diamonds: 250 },
-                { id: '3', firstName: 'Мария', username: 'maria_tg', isPremium: false, diamonds: 75 },
-                { id: '4', firstName: 'Дмитрий', username: 'dmitry_tg', isPremium: true, diamonds: 500 },
-                { id: '5', firstName: 'Екатерина', username: 'ekaterina_tg', isPremium: false, diamonds: 150 }
-            ];
+    function estimateReward(uid){
+      const ep = state.pool.epoch; const userEff = state.points[ep]?.[uid]?.eff || 0; const sumEff = Object.values(state.points[ep]||{}).reduce((s,p)=> s+(p.eff||0), 0);
+      if (userEff<=0 || sumEff<=0) return 0; const total = state.pool.amount + (state.pool.dust||0);
+      return Math.floor((total * (userEff/sumEff))*100)/100;
+    }
 
-            demoUsers.forEach(user => {
-                state.users[user.id] = user;
-                state.points[user.id] = { reads: 0, reactions: 0, effective: 0 };
-                state.userPosts[user.id] = {};
-                state.onlineUsers.add(user.id); // Mark as online
-            });
+    function sortPosts(){
+      // pinned slot rendered separately; feed: boosted_at DESC then created_at DESC
+      return [...state.posts].sort((a,b)=>{
+        const ab = b.boostedAt? b.boostedAt.getTime():0; const aa = a.boostedAt? a.boostedAt.getTime():0;
+        if (ab !== aa) return ab-aa; // desc
+        return b.createdAt.getTime()-a.createdAt.getTime();
+      });
+    }
 
-            // Add some demo posts
-            if (state.posts.length === 0) {
-                state.posts = [
-                    createPost('2', 'Привет всем! Это демо-версия платформы с системой наград. Публикуйте посты, ставьте лайки и зарабатывайте!'),
-                    createPost('3', 'Отличная идея с распределением пула! Интересно посмотреть, как будет работать система на практике.'),
-                    createPost('4', 'Только что протестировал функционал. Закрепление постов работает отлично! 🚀')
-                ];
-            }
-        }
+    function avatarText(u){ return (u.firstName||u.username||'U').slice(0,1).toUpperCase() }
+    function displayName(u){ return u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : (u.firstName || `@${u.username}`) }
 
-        function createPost(authorId, content) {
-            return {
-                id: Date.now() + Math.random(),
-                authorId,
-                content,
-                timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-                views: Math.floor(Math.random() * 50) + 10,
-                likes: Math.floor(Math.random() * 20) + 5,
-                isBoosted: false,
-                isPinned: false,
-                createdAt: new Date()
-            };
-        }
+    function renderFeed(){
+      const list = byId('feed');
+      const items = sortPosts();
+      list.innerHTML = items.map(p=>{
+        const author = state.users[p.authorId];
+        const isMine = p.authorId===state.currentUserId;
+        const liked = !!(state.interactions[state.pool.epoch]?.[state.currentUserId]?.[p.id]?.react);
+        const canBoost = isMine;
+        const cdLeft = p.boostedAt ? (p.boostedAt.getTime()+ECONOMY.BOOST_COOLDOWN_MS - now().getTime()) : 0;
+        return `
+          <article class="card" data-post-id="${p.id}">
+            <div class="row">
+              <div class="user">
+                <div class="avatar">${avatarText(author)}</div>
+                <div>
+                  <div class="name">${displayName(author)} ${author.isPremium?'<i class=\"fa-solid fa-star\" style=\"color:var(--ok)\"></i>':''} ${isMine?'<span class=\"muted\">(Вы)</span>':''}</div>
+                  <div class="meta">${p.createdAt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${p.boostedAt? ' • <span class="badge rocket"><i class="fa-solid fa-rocket"></i> Boost</span>':''}</div>
+                </div>
+              </div>
+              <button class="btn" onclick="openReport('${p.id}')" title="Пожаловаться"><i class="fa-solid fa-flag"></i></button>
+            </div>
+            <div class="content">${escapeHtml(p.text)}</div>
+            <div class="stats"><span><i class="fa-regular fa-eye"></i> ${p.views}</span><span><i class="fa-regular fa-heart"></i> ${p.likes}</span></div>
+            <div class="actions">
+              <button class="btn like ${liked?'liked':''}" ${isMine? 'disabled':''} onclick="react('${p.id}')"><i class="${liked?'fa-solid':'fa-regular'} fa-heart"></i> Лайк</button>
+              <button class="btn" ${!canBoost? 'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст ${cdLeft>0?`(${fmtClock(cdLeft)})`:''}</button>
+              <button class="btn" ${!isMine? 'disabled':''} onclick="openPin('${p.id}')"><i class="fa-solid fa-thumbtack"></i> Закреп</button>
+            </div>
+          </article>`;
+      }).join('');
 
-        // Enhanced mathematical functions
-        function calculateUserShare(userId) {
-            const userPoints = state.points[userId]?.effective || 0;
-            const totalPoints = state.pool.totalPoints || 1;
-            
-            if (userPoints < 1 || totalPoints < 1) return 0;
-            
-            // Enhanced formula with trust multiplier
-            const trust = state.users[userId]?.trust || 1.0;
-            const rawShare = userPoints / totalPoints;
-            return Math.min(rawShare * trust, 0.3); // Cap at 30% to prevent dominance
-        }
+      byId('feed-empty').style.display = items.length? 'none':'block';
+      attachReadObserver();
+      renderPinned();
+    }
 
-        function calculateEstimatedReward(userId) {
-            const share = calculateUserShare(userId);
-            return Math.floor(state.pool.current * share * 100) / 100; // Round to 2 decimal places
-        }
+    function renderPinned(){
+      const slot = byId('pinned');
+      if (!state.pin.active){ slot.style.display='none'; byId('pin-cta').innerHTML=''; return; }
+      const p = state.posts.find(x=> x.id===state.pin.active.postId);
+      if (!p){ slot.style.display='none'; return; }
+      const author = state.users[p.authorId];
+      slot.style.display='block';
+      byId('pin-author').textContent = displayName(author);
+      byId('pin-text').textContent = p.text;
+      byId('pin-views').textContent = p.views; byId('pin-likes').textContent = p.likes;
+      byId('pin-queue').style.display = state.pin.queue.length? 'flex':'none'; byId('queue-len').textContent = state.pin.queue.length;
+      const left = state.pin.active.endsAt.getTime()-now().getTime(); byId('pin-timer').textContent = fmtClock(left);
+      if (p.authorId===state.currentUserId){ byId('pin-cta').innerHTML = `<button class="btn" onclick="openPin('${p.id}')"><i class='fa-solid fa-plus'></i> Продлить 1 мин за 100 💎</button>` } else { byId('pin-cta').innerHTML = '' }
+    }
 
-        function updatePool(action) {
-            const contribution = state.prices[action] || 0;
-            state.pool.current += contribution;
-            
-            // Recalculate total points
-            state.pool.totalPoints = Object.values(state.points).reduce((sum, p) => sum + (p.effective || 0), 0);
-            state.pool.participants = Object.keys(state.points).filter(id => 
-                (state.points[id]?.effective || 0) > 0
-            ).length;
-        }
+    function renderLeaderboard(which='current'){
+      const lb = byId('leaderboard'); const ep = which==='current'? state.pool.epoch : toUtcYMD(new Date(Date.parse(state.pool.epoch)+24*3600*1000-1)); // prev stored
+      const entries = Object.entries(state.points[ep]||{}).map(([uid,p])=>({uid, p})).filter(x=> (x.p.eff||0)>0).sort((a,b)=> (b.p.eff||0)-(a.p.eff||0)).slice(0,100);
+      lb.innerHTML = entries.map((x,i)=>{
+        const u = state.users[x.uid];
+        const est = which==='current'? estimateReward(x.uid): 0;
+        return `<div class="card">
+          <div class="user"><div class="avatar" style="background:${rankBg(i+1)}">${i+1}</div>
+            <div style="margin-left:8px"><div class="name">${displayName(u)} ${x.uid===state.currentUserId?'<span class=\"muted\">(Вы)</span>':''}</div>
+            <div class="meta">${x.p.eff} баллов • ${which==='current'?`~${est} 💎`: 'прошлая эпоха'}</div></div></div>
+        </div>`
+      }).join('') || `<div class="empty">Рейтинг пуст</div>`;
+    }
 
-        // Render functions
-        function renderAll() {
-            renderFeed();
-            renderLeaderboard();
-            updateUI();
-            updatePinnedSection();
-        }
+    function rankBg(r){ return r===1? 'linear-gradient(135deg,#FFD700,#FFA500)': r===2? 'linear-gradient(135deg,#C0C0C0,#A0A0A0)': r===3? 'linear-gradient(135deg,#CD7F32,#A0522D)': 'linear-gradient(135deg,var(--brand),var(--brand-2))' }
 
-        function renderFeed() {
-            const feed = document.getElementById('feed');
-            const emptyState = document.getElementById('feed-empty');
-            
-            if (state.posts.length === 0) {
-                feed.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
-            
-            emptyState.style.display = 'none';
-            
-            // Sort posts: pinned > boosted > recent
-            const sortedPosts = [...state.posts].sort((a, b) => {
-                if (a.isPinned && !b.isPinned) return -1;
-                if (!a.isPinned && b.isPinned) return 1;
-                if (a.isBoosted && !b.isBoosted) return -1;
-                if (!a.isBoosted && b.isBoosted) return 1;
-                return new Date(b.createdAt) - new Date(a.createdAt);
-            });
+    function renderAll(){ renderHUD(); renderFeed(); renderLeaderboard(getActiveLbTab()); }
 
-            feed.innerHTML = sortedPosts.map(post => {
-                if (post.isPinned && state.pinnedPost && post.id === state.pinnedPost.id) return '';
-                
-                const author = state.users[post.authorId];
-                const isAuthor = post.authorId === state.currentUser.id;
-                const userPostData = state.userPosts[state.currentUser.id]?.[post.id] || { isLiked: false };
-                const isOnline = state.onlineUsers.has(post.authorId);
-                
-                if (!author) return '';
-                
-                return `
-                    <div class="post-card">
-                        <div class="post-header">
-                            <div class="author-info">
-                                <div class="author-avatar">${getUserAvatarText(author)}</div>
-                                <div class="author-details">
-                                    <div class="author-name">
-                                        ${getUserDisplayName(author)}
-                                        ${author.isPremium ? ' <i class="fas fa-star" style="color: #4ecdc4;"></i>' : ''}
-                                        ${isAuthor ? ' <span style="color: #667eea;">(Вы)</span>' : ''}
-                                    </div>
-                                    <div class="post-time">
-                                        ${post.timestamp}
-                                        ${isOnline ? ' • <span style="color: #4cd964;">online</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            ${post.isBoosted ? '<div class="points-earned"><i class="fas fa-rocket"></i> Буст</div>' : ''}
-                        </div>
-                        <div class="post-content">${post.content}</div>
-                        <div class="post-stats">
-                            <span><i class="far fa-eye"></i> ${post.views} просмотров</span>
-                            <span><i class="far fa-heart"></i> ${post.likes} лайков</span>
-                        </div>
-                        <div class="post-actions">
-                            <button class="action-btn like-btn ${userPostData.isLiked ? 'liked' : ''}" 
-                                    onclick="likePost(${post.id})" ${isAuthor ? 'disabled' : ''}>
-                                <i class="${userPostData.isLiked ? 'fas' : 'far'} fa-heart"></i>
-                                <span>Лайк</span>
-                            </button>
-                            ${isAuthor && !post.isPinned ? `
-                                <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})" ${post.isBoosted ? 'disabled' : ''}>
-                                    <i class="fas fa-rocket"></i>
-                                    <span>Буст</span>
-                                </button>
-                                <button class="action-btn pin-btn" onclick="openPinModal(${post.id})" ${state.pinnedPost ? 'disabled' : ''}>
-                                    <i class="fas fa-thumbtack"></i>
-                                    <span>Закреп</span>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+    /* ===== Actions (UI bindings) ===== */
+    function react(postId){ const post = state.posts.find(p=>p.id===postId); if (!post) return; grantReact(post); }
 
-        function renderLeaderboard() {
-            const leaderboard = document.getElementById('leaderboard');
-            
-            const sortedUsers = Object.entries(state.points)
-                .map(([userId, points]) => ({
-                    userId,
-                    points: points.effective,
-                    ...state.users[userId]
-                }))
-                .filter(user => user.points > 0)
-                .sort((a, b) => b.points - a.points)
-                .slice(0, 10);
+    function openReport(postId){ state.ui.currentPostId = postId; showModal(byId('modal-report')); }
+    function sendReport(){ const type = byId('report-type').value; state.moderation.reports.push({postId: state.ui.currentPostId, type, at: now()}); save(); closeModal('modal-report'); toast('Жалоба отправлена', 'info'); }
 
-            if (sortedUsers.length === 0) {
-                leaderboard.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-trophy"></i>
-                        <h3>Рейтинг пуст</h3>
-                        <p>Зарабатывайте баллы за реакции, чтобы подняться в рейтинге</p>
-                    </div>
-                `;
-                return;
-            }
+    function openStore(){ showModal(byId('modal-store')); }
+    function buyPack(amount){ const uid = state.currentUserId; state.users[uid].diamonds += amount; (state.transactions[uid] ||= []).push({type:'purchase', amount, meta:{method: byId('pay-method').value}, at: now()}); save(); renderHUD(); closeModal('modal-store'); toast(`Куплено ${amount} 💎`, 'ok'); }
 
-            leaderboard.innerHTML = sortedUsers.map((user, index) => {
-                const reward = calculateEstimatedReward(user.userId);
-                const isOnline = state.onlineUsers.has(user.userId);
-                const isCurrent = user.userId === state.currentUser.id;
-                
-                return `
-                    <div class="post-card">
-                        <div class="author-info">
-                            <div class="author-avatar" style="background: ${getRankColor(index + 1)};">${index + 1}</div>
-                            <div class="author-details">
-                                <div class="author-name">
-                                    ${getUserDisplayName(user)}
-                                    ${user.isPremium ? ' <i class="fas fa-star" style="color: #4ecdc4;"></i>' : ''}
-                                    ${isCurrent ? ' <span style="color: #667eea;">(Вы)</span>' : ''}
-                                </div>
-                                <div class="post-time">
-                                    ${user.points} баллов • ~${reward} 💎
-                                    ${isOnline ? ' • <span style="color: #4cd964;">online</span>' : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+    /* ===== UI utils ===== */
+    function showModal(el){ el.style.display='flex'; }
+    function closeModal(id){ byId(id).style.display='none'; }
+    function toast(msg, kind='ok'){ const t = document.createElement('div'); t.className = `t ${kind==='err'?'err':kind==='info'?'info':'ok'}`; t.textContent = msg; byId('toast').appendChild(t); setTimeout(()=> t.remove(), 2800); }
+    const escapeHtml = (s)=> s.replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
 
-        function getRankColor(rank) {
-            const colors = {
-                1: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                2: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)',
-                3: 'linear-gradient(135deg, #CD7F32, #A0522D)'
-            };
-            return colors[rank] || 'linear-gradient(135deg, #667eea, #764ba2)';
-        }
+    /* ===== Event wiring ===== */
+    document.addEventListener('click', (e)=>{ if (e.target.dataset.close!==undefined || e.target.closest('[data-close]')){ const m = e.target.closest('.modal'); if (m) m.style.display='none'; }
+      const navBtn = e.target.closest('.nav button'); if (navBtn && navBtn.dataset.go){ document.querySelectorAll('.nav button').forEach(b=> b.classList.remove('active')); navBtn.classList.add('active'); document.querySelectorAll('.section').forEach(s=> s.classList.remove('active')); byId(navBtn.dataset.go).classList.add('active'); }
+      const tab = e.target.closest('.tab'); if (tab){ document.querySelectorAll('.tab').forEach(t=> t.classList.remove('active')); tab.classList.add('active'); renderLeaderboard(getActiveLbTab()); }
+      const storePack = e.target.closest('#modal-store [data-pack]'); if (storePack){ buyPack(parseInt(storePack.dataset.pack,10)); }
+    });
 
-        function updateUI() {
-            if (!state.currentUser) return;
-            
-            const currentPoints = state.points[state.currentUser.id] || { reads: 0, reactions: 0, effective: 0 };
-            
-            document.getElementById('diamond-balance').textContent = state.currentUser.diamonds;
-            document.getElementById('points-today').textContent = currentPoints.effective;
-            
-            // Profile section
-            document.getElementById('profile-avatar').textContent = getUserAvatarText(state.currentUser);
-            document.getElementById('profile-name').textContent = getUserDisplayName(state.currentUser);
-            document.getElementById('profile-id').textContent = `ID: ${state.currentUser.id}`;
-            document.getElementById('profile-diamonds').textContent = state.currentUser.diamonds;
-            document.getElementById('profile-posts').textContent = state.posts.filter(p => p.authorId === state.currentUser.id).length;
-            document.getElementById('profile-reads').textContent = currentPoints.reads;
-            document.getElementById('profile-reactions').textContent = currentPoints.reactions;
-            document.getElementById('estimated-reward').textContent = `~${calculateEstimatedReward(state.currentUser.id)} 💎`;
-            
-            // Pool section
-            document.getElementById('current-pool').textContent = state.pool.current + ' 💎';
-            document.getElementById('total-points').textContent = state.pool.totalPoints;
-            document.getElementById('active-users').textContent = state.pool.participants;
-            document.getElementById('your-points').textContent = currentPoints.effective;
-            document.getElementById('your-share').textContent = (calculateUserShare(state.currentUser.id) * 100).toFixed(1) + '%';
-        }
+    function getActiveLbTab(){ return document.querySelector('.tabs .tab.active')?.dataset.epoch || 'current'; }
 
-        function updatePinnedSection() {
-            const pinnedSection = document.getElementById('pinned-section');
-            
-            if (state.pinnedPost) {
-                const author = state.users[state.pinnedPost.authorId];
-                pinnedSection.style.display = 'block';
-                document.getElementById('pinned-author').textContent = getUserDisplayName(author);
-                document.getElementById('pinned-content').textContent = state.pinnedPost.content;
-                document.getElementById('pinned-views').textContent = state.pinnedPost.views;
-                document.getElementById('pinned-likes').textContent = state.pinnedPost.likes;
-            } else {
-                pinnedSection.style.display = 'none';
-            }
-        }
+    byId('create-btn').onclick = ()=> showModal(byId('modal-create'));
+    byId('post-submit').onclick = createPostFlow;
+    byId('boost-confirm').onclick = doBoost;
+    byId('pin-confirm').onclick = doPin;
+    byId('open-store').onclick = openStore;
+    byId('report-send').onclick = sendReport;
 
-        // User helper functions
-        function getUserAvatarText(user) {
-            return user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U';
-        }
+    /* ===== App loop (tickers) ===== */
+    setInterval(()=>{ renderHUD(); pinTicker(); settlementTick(); renderPinned(); }, 1000);
 
-        function getUserDisplayName(user) {
-            if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
-            if (user.firstName) return user.firstName;
-            if (user.username) return `@${user.username}`;
-            return 'Пользователь';
-        }
-
-        // Navigation
-        function showSection(sectionName) {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(sectionName + '-section').classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        // Post actions
-        function createPost(event) {
-            event.preventDefault();
-            const text = document.getElementById('postText').value.trim();
-            
-            if (!text) {
-                showNotification('Введите текст поста', 'error');
-                return;
-            }
-
-            if (state.currentUser.diamonds < state.prices.post) {
-                showNotification('Недостаточно алмазов!', 'error');
-                openStoreModal();
-                return;
-            }
-
-            // Deduct diamonds and update pool
-            state.currentUser.diamonds -= state.prices.post;
-            updatePool('post');
-            
-            // Create new post
-            const newPost = createPost(state.currentUser.id, text);
-            state.posts.unshift(newPost);
-            
-            // Initialize for all users
-            Object.keys(state.users).forEach(userId => {
-                if (!state.userPosts[userId][newPost.id]) {
-                    state.userPosts[userId][newPost.id] = { isLiked: false };
-                }
-            });
-            
-            renderAll();
-            closeCreatePostModal();
-            document.getElementById('postText').value = '';
-            saveState();
-            
-            showNotification('Пост опубликован!', 'success');
-        }
-
-        function likePost(postId) {
-            const post = state.posts.find(p => p.id === postId);
-            const userPostData = state.userPosts[state.currentUser.id][postId];
-            
-            if (post && post.authorId !== state.currentUser.id && !userPostData.isLiked) {
-                post.likes++;
-                userPostData.isLiked = true;
-                
-                // Add points for reaction
-                if (!state.points[state.currentUser.id]) {
-                    state.points[state.currentUser.id] = { reads: 0, reactions: 0, effective: 0 };
-                }
-                state.points[state.currentUser.id].reactions++;
-                state.points[state.currentUser.id].effective += 3;
-                
-                updatePool('post'); // Recalculate pool
-                renderAll();
-                saveState();
-                
-                showNotification('+3 балла за реакцию!', 'success');
-            }
-        }
-
-        function boostPost() {
-            const post = state.posts.find(p => p.id === state.currentPostId);
-            if (post && state.currentUser.diamonds >= state.prices.boost) {
-                state.currentUser.diamonds -= state.prices.boost;
-                post.isBoosted = true;
-                updatePool('boost');
-                
-                renderAll();
-                closeBoostModal();
-                saveState();
-                
-                showNotification('Пост забустен!', 'success');
-            }
-        }
-
-        function pinPost() {
-            const post = state.posts.find(p => p.id === state.currentPostId);
-            if (post && !state.pinnedPost && state.currentUser.diamonds >= state.prices.pin) {
-                state.currentUser.diamonds -= state.prices.pin;
-                state.pinnedPost = post;
-                post.isPinned = true;
-                updatePool('pin');
-                
-                startPinTimer();
-                renderAll();
-                closePinModal();
-                saveState();
-                
-                showNotification('Пост закреплен на 1 минуту!', 'success');
-            }
-        }
-
-        function startPinTimer() {
-            let timeLeft = 60;
-            
-            if (state.pinTimer) clearInterval(state.pinTimer);
-            
-            state.pinTimer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('pin-timer').textContent = 
-                    `${Math.floor(timeLeft / 60).toString().padStart(2, '0')}:${(timeLeft % 60).toString().padStart(2, '0')}`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(state.pinTimer);
-                    state.pinTimer = null;
-                    state.pinnedPost.isPinned = false;
-                    state.pinnedPost = null;
-                    renderAll();
-                    saveState();
-                    showNotification('Время закрепления истекло', 'info');
-                }
-            }, 1000);
-        }
-
-        function buyDiamonds(amount) {
-            state.currentUser.diamonds += amount;
-            updateUI();
-            closeStoreModal();
-            saveState();
-            showNotification(`Куплено ${amount} алмазов!`, 'success');
-        }
-
-        // Modal functions
-        function openCreatePostModal() {
-            document.getElementById('createPostModal').style.display = 'block';
-        }
-
-        function closeCreatePostModal() {
-            document.getElementById('createPostModal').style.display = 'none';
-        }
-
-        function openBoostModal(postId) {
-            state.currentPostId = postId;
-            document.getElementById('boostModal').style.display = 'block';
-        }
-
-        function closeBoostModal() {
-            document.getElementById('boostModal').style.display = 'none';
-        }
-
-        function openPinModal(postId) {
-            state.currentPostId = postId;
-            document.getElementById('pinModal').style.display = 'block';
-        }
-
-        function closePinModal() {
-            document.getElementById('pinModal').style.display = 'none';
-        }
-
-        function openStoreModal() {
-            document.getElementById('storeModal').style.display = 'block';
-        }
-
-        function closeStoreModal() {
-            document.getElementById('storeModal').style.display = 'none';
-        }
-
-        // Background services
-        function startBackgroundServices() {
-            // Simulate online users activity
-            setInterval(() => {
-                // Randomly change online status of demo users
-                Object.keys(state.users).forEach(userId => {
-                    if (userId !== state.currentUser.id && Math.random() > 0.3) {
-                        state.onlineUsers.add(userId);
-                    } else if (Math.random() > 0.8) {
-                        state.onlineUsers.delete(userId);
-                    }
-                });
-                
-                // Update timestamps occasionally
-                if (Math.random() > 0.7) {
-                    state.posts.forEach(post => {
-                        if (!post.isPinned && Math.random() > 0.8) {
-                            post.views += Math.floor(Math.random() * 3);
-                        }
-                    });
-                    renderFeed();
-                }
-            }, 10000);
-            
-            // Auto-save every 30 seconds
-            setInterval(() => {
-                saveState();
-            }, 30000);
-        }
-
-        // Notification system
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            const bgColor = type === 'success' ? '#4cd964' : type === 'error' ? '#ff3b30' : '#667eea';
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                background: ${bgColor};
-                color: white;
-                padding: 16px 20px;
-                border-radius: 16px;
-                font-weight: 600;
-                z-index: 3000;
-                animation: slideIn 0.3s ease-out;
-                font-size: 14px;
-                max-width: 300px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(20px);
-            `;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease-in forwards';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Close modals on outside click
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
-        });
-
-        // Initialize app when loaded
-        document.addEventListener('DOMContentLoaded', initApp);
-    </script>
+    /* ===== Init ===== */
+    if (!load()){ initUser(); }
+    else { // revive Date objects in posts & pin
+      state.posts = state.posts.map(p=> ({...p, createdAt: new Date(p.createdAt), boostedAt: p.boostedAt? new Date(p.boostedAt): null }));
+      if (state.pin.active){ state.pin.active.endsAt = new Date(state.pin.active.endsAt) }
+      if (Array.isArray(state.pin.queue)){ state.pin.queue = state.pin.queue.map(q=> ({...q, enqueuedAt: new Date(q.enqueuedAt)})) }
+    }
+    // ensure current epoch values
+    state.pool.epoch = toUtcYMD(); state.pool.endsAt = epochEndsAt();
+    ensureEpochStructures(state.pool.epoch);
+    renderAll();
+  </script>
 </body>
 </html>
