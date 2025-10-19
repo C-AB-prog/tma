@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Feed</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #0f0f0f;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* Header */
+        .header {
+            background: #1a1a1a;
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #333;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .balance-section {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .points-card {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Pinned Post */
+        .pinned-section {
+            margin: 16px 0;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 16px;
+            border: 2px solid #667eea;
+        }
+
+        .pinned-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pinned-timer {
+            background: #667eea;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Feed */
+        .feed {
+            margin: 16px 0;
+        }
+
+        .post-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #333;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .author-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .author-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .post-time {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .post-content {
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .like-btn {
+            background: #333;
+            color: white;
+        }
+
+        .like-btn.liked {
+            background: #f5576c;
+            color: white;
+        }
+
+        .boost-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .pin-btn {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Create Post */
+        .create-post {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            z-index: 1000;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            padding: 24px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #0f0f0f;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cost-info {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Store */
+        .packs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .pack-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pack-card:hover {
+            border-color: #667eea;
+        }
+
+        .pack-amount {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pack-price {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Profile */
+        .profile-section {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #0f0f0f;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 4px;
+            margin: 16px 0;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+
+        .points-earned {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">💎 Diamond Feed</div>
+                <div class="balance-section">
+                    <div class="points-card">
+                        🏆 <span id="points-today">0</span> баллов
+                    </div>
+                    <div class="balance-card">
+                        💎 <span id="diamond-balance">100</span> алмазов
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Pinned Post -->
+        <section class="pinned-section" id="pinned-section" style="display: none;">
+            <div class="pinned-header">
+                <div class="pinned-label">📌 Закреплено</div>
+                <div class="pinned-timer" id="pin-timer">05:00</div>
+            </div>
+            <div class="post-card">
+                <div class="post-header">
+                    <div class="author-info">
+                        <div class="author-avatar"></div>
+                        <div class="author-name">Автор закрепленного поста</div>
+                    </div>
+                    <div class="post-time">2 мин назад</div>
+                </div>
+                <div class="post-content">
+                    Это закрепленный пост. Он находится в самом верху ленты и виден всем пользователям.
+                </div>
+            </div>
+        </section>
+
+        <!-- Feed -->
+        <section class="feed" id="feed">
+            <!-- Posts will be loaded here -->
+        </section>
+
+        <!-- Create Post Button -->
+        <button class="create-post" onclick="openCreatePostModal()">+</button>
+
+        <!-- Create Post Modal -->
+        <div class="modal" id="createPostModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Создать пост</div>
+                    <button class="close-btn" onclick="closeCreatePostModal()">×</button>
+                </div>
+                <form onsubmit="createPost(event)">
+                    <div class="form-group">
+                        <label class="form-label">Текст поста (до 500 символов)</label>
+                        <textarea class="form-textarea" id="postText" maxlength="500" placeholder="Что у вас нового?"></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Опубликовать за 10 💎</button>
+                    <div class="cost-info">Будет списано 10 алмазов</div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Boost Modal -->
+        <div class="modal" id="boostModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Буст поста</div>
+                    <button class="close-btn" onclick="closeBoostModal()">×</button>
+                </div>
+                <p>Поднять пост в топ ленты за 10 алмазов?</p>
+                <button class="submit-btn" onclick="boostPost()">Поднять за 10 💎</button>
+                <div class="cost-info">Будет списано 10 алмазов</div>
+            </div>
+        </div>
+
+        <!-- Pin Modal -->
+        <div class="modal" id="pinModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Закрепить пост</div>
+                    <button class="close-btn" onclick="closePinModal()">×</button>
+                </div>
+                <p>Закрепить пост на 1 минуту за 100 алмазов?</p>
+                <button class="submit-btn" onclick="pinPost()">Закрепить за 100 💎</button>
+                <div class="cost-info">Будет списано 100 алмазов</div>
+            </div>
+        </div>
+
+        <!-- Store Modal -->
+        <div class="modal" id="storeModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">Покупка алмазов</div>
+                    <button class="close-btn" onclick="closeStoreModal()">×</button>
+                </div>
+                <div class="packs-grid">
+                    <div class="pack-card" onclick="buyDiamonds(100)">
+                        <div class="pack-amount">100 💎</div>
+                        <div class="pack-price">~1 TON</div>
+                    </div>
+                    <div class="pack-card" onclick="buyDiamonds(500)">
+                        <div class="pack-amount">500 💎</div>
+                        <div class="pack-price">~5 TON</div>
+                    </div>
+                    <div class="pack-card" onclick="buyDiamonds(1000)">
+                        <div class="pack-amount">1000 💎</div>
+                        <div class="pack-price">~10 TON</div>
+                    </div>
+                    <div class="pack-card" onclick="buyDiamonds(5000)">
+                        <div class="pack-amount">5000 💎</div>
+                        <div class="pack-price">~50 TON</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram WebApp initialization
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+
+        // State management
+        let state = {
+            diamonds: 100,
+            points: 0,
+            posts: [],
+            currentUser: {
+                id: 1,
+                name: 'Пользователь',
+                avatar: ''
+            },
+            currentPostId: null
+        };
+
+        // Sample posts data
+        const samplePosts = [
+            {
+                id: 1,
+                author: { id: 2, name: 'Алексей', avatar: '' },
+                content: 'Привет всем! Это демо-версия ленты с алмазами. Здесь можно публиковать посты, бустить их и зарабатывать баллы за активность.',
+                timestamp: '5 мин назад',
+                views: 15,
+                likes: 8,
+                isLiked: false,
+                isAuthor: false,
+                isBoosted: false
+            },
+            {
+                id: 2,
+                author: { id: 3, name: 'Мария', avatar: '' },
+                content: 'Отличная идея с системой баллов и распределением пула! Жду, когда можно будет протестировать полную версию.',
+                timestamp: '12 мин назад',
+                views: 23,
+                likes: 12,
+                isLiked: true,
+                isAuthor: false,
+                isBoosted: true
+            },
+            {
+                id: 3,
+                author: { id: 1, name: 'Пользователь', avatar: '' },
+                content: 'Это мой собственный пост. Как автор, я вижу кнопки для буста и закрепа.',
+                timestamp: '20 мин назад',
+                views: 8,
+                likes: 3,
+                isLiked: false,
+                isAuthor: true,
+                isBoosted: false
+            }
+        ];
+
+        // Initialize the app
+        function initApp() {
+            state.posts = samplePosts;
+            renderFeed();
+            updateUI();
+            startPinTimer();
+        }
+
+        // Render feed posts
+        function renderFeed() {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '';
+
+            state.posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post-card';
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="author-info">
+                            <div class="author-avatar"></div>
+                            <div class="author-name">${post.author.name}</div>
+                            ${post.isBoosted ? '<span class="points-earned">🚀 Буст</span>' : ''}
+                        </div>
+                        <div class="post-time">${post.timestamp}</div>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    <div class="post-stats">
+                        <span>👁️ ${post.views} просмотров</span>
+                        <span>❤️ ${post.likes} лайков</span>
+                    </div>
+                    <div class="post-actions">
+                        <button class="action-btn like-btn ${post.isLiked ? 'liked' : ''}" 
+                                onclick="likePost(${post.id})">
+                            ${post.isLiked ? '❤️' : '🤍'} Лайк
+                        </button>
+                        ${post.isAuthor ? `
+                            <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})">
+                                🚀 Буст
+                            </button>
+                            <button class="action-btn pin-btn" onclick="openPinModal(${post.id})">
+                                📌 Закреп
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                feed.appendChild(postElement);
+            });
+        }
+
+        // Update UI elements
+        function updateUI() {
+            document.getElementById('diamond-balance').textContent = state.diamonds;
+            document.getElementById('points-today').textContent = state.points;
+        }
+
+        // Modal functions
+        function openCreatePostModal() {
+            if (state.diamonds < 10) {
+                alert('Недостаточно алмазов! Минимум 10 💎 для публикации поста.');
+                openStoreModal();
+                return;
+            }
+            document.getElementById('createPostModal').style.display = 'block';
+        }
+
+        function closeCreatePostModal() {
+            document.getElementById('createPostModal').style.display = 'none';
+        }
+
+        function openBoostModal(postId) {
+            if (state.diamonds < 10) {
+                alert('Недостаточно алмазов! Нужно 10 💎 для буста.');
+                openStoreModal();
+                return;
+            }
+            state.currentPostId = postId;
+            document.getElementById('boostModal').style.display = 'block';
+        }
+
+        function closeBoostModal() {
+            document.getElementById('boostModal').style.display = 'none';
+        }
+
+        function openPinModal(postId) {
+            if (state.diamonds < 100) {
+                alert('Недостаточно алмазов! Нужно 100 💎 для закрепа на 1 минуту.');
+                openStoreModal();
+                return;
+            }
+            state.currentPostId = postId;
+            document.getElementById('pinModal').style.display = 'block';
+        }
+
+        function closePinModal() {
+            document.getElementById('pinModal').style.display = 'none';
+        }
+
+        function openStoreModal() {
+            document.getElementById('storeModal').style.display = 'block';
+        }
+
+        function closeStoreModal() {
+            document.getElementById('storeModal').style.display = 'none';
+        }
+
+        // Post actions
+        function createPost(event) {
+            event.preventDefault();
+            const text = document.getElementById('postText').value.trim();
+            
+            if (!text) {
+                alert('Введите текст поста');
+                return;
+            }
+
+            if (text.length > 500) {
+                alert('Пост не должен превышать 500 символов');
+                return;
+            }
+
+            // Deduct diamonds
+            state.diamonds -= 10;
+            
+            // Add new post
+            const newPost = {
+                id: Date.now(),
+                author: state.currentUser,
+                content: text,
+                timestamp: 'только что',
+                views: 0,
+                likes: 0,
+                isLiked: false,
+                isAuthor: true,
+                isBoosted: false
+            };
+
+            state.posts.unshift(newPost);
+            renderFeed();
+            updateUI();
+            closeCreatePostModal();
+            document.getElementById('postText').value = '';
+
+            // Simulate points accrual
+            setTimeout(() => {
+                state.points += 1;
+                updateUI();
+                showPointsNotification(1, 'за просмотр поста');
+            }, 2000);
+        }
+
+        function likePost(postId) {
+            const post = state.posts.find(p => p.id === postId);
+            if (post) {
+                if (post.isLiked) {
+                    post.likes--;
+                    post.isLiked = false;
+                } else {
+                    post.likes++;
+                    post.isLiked = true;
+                    
+                    // Add points for reaction
+                    state.points += 3;
+                    updateUI();
+                    showPointsNotification(3, 'за реакцию');
+                }
+                renderFeed();
+            }
+        }
+
+        function boostPost() {
+            const post = state.posts.find(p => p.id === state.currentPostId);
+            if (post) {
+                state.diamonds -= 10;
+                post.isBoosted = true;
+                post.timestamp = 'только что (буст)';
+                
+                // Move to top
+                state.posts = state.posts.filter(p => p.id !== state.currentPostId);
+                state.posts.unshift(post);
+                
+                renderFeed();
+                updateUI();
+                closeBoostModal();
+            }
+        }
+
+        function pinPost() {
+            state.diamonds -= 100;
+            
+            // Show pinned section
+            const pinnedSection = document.getElementById('pinned-section');
+            pinnedSection.style.display = 'block';
+            
+            // Start pin timer
+            startPinTimer();
+            
+            updateUI();
+            closePinModal();
+        }
+
+        function buyDiamonds(amount) {
+            // In real app, this would integrate with TON or Telegram Stars
+            state.diamonds += amount;
+            updateUI();
+            closeStoreModal();
+            alert(`Успешно куплено ${amount} алмазов!`);
+        }
+
+        // Utility functions
+        function startPinTimer() {
+            let timeLeft = 300; // 5 minutes
+            const timerElement = document.getElementById('pin-timer');
+            
+            const timer = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    document.getElementById('pinned-section').style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function showPointsNotification(points, reason) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: linear-gradient(135deg, #4ecdc4, #44a08d);
+                color: white;
+                padding: 12px 16px;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 3000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = `+${points} балл ${reason}`;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Add CSS for animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize app when loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Handle visibility change for points accrual
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Simulate points for being active
+                setTimeout(() => {
+                    state.points += 1;
+                    updateUI();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
