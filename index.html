@@ -3,113 +3,115 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Diamond Feed • TMA v1.7 (Telegram-only + Realtime)</title>
+  <title>Diamond Feed • TMA v1.7.1 (Telegram-only + Realtime)</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Опционально для кросс-устройств (демо без бэка): ?ably=YOUR_KEY&chan=diamond-feed -->
+  <!-- Опционально для кросс-устройств: ?ably=YOUR_KEY&chan=diamond-feed -->
   <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <style>
     :root{
-      --bg:#0b0b0f;--bg-2:#10121a;--card:#141622;--muted:#99a2b3;--text:#f2f4f8;
-      --brand:#7c8cff;--brand-2:#9a6bff;--ok:#43d6a3;--warn:#ffb84d;--err:#ff6b6b;
-      --radius:16px;--radius-lg:20px;--shadow:0 10px 40px rgba(0,0,0,.25);--ring:0 0 0 2px rgba(124,140,255,.35);
+      --bg:#08090f;--bg-2:#0f1220;--card:#14182a;--muted:#9aa3b5;--text:#f3f5fb;
+      --brand:#7aa2ff;--brand-2:#a276ff;--ok:#43d6a3;--warn:#ffb84d;--err:#ff6b6b;
+      --radius:16px;--radius-lg:22px;--shadow:0 16px 60px rgba(0,0,0,.35);--ring:0 0 0 2px rgba(122,162,255,.4);
     }
     *{box-sizing:border-box} html,body{height:100%}
     body{
       margin:0;
       background:
-        radial-gradient(1200px 600px at 20% 0%, rgba(124,140,255,.13), transparent 60%),
-        radial-gradient(900px 400px at 100% 0%, rgba(154,107,255,.12), transparent 60%),
-        var(--bg);
+        radial-gradient(1200px 600px at 20% 0%, rgba(122,162,255,.16), transparent 60%),
+        radial-gradient(900px 400px at 100% 0%, rgba(162,118,255,.14), transparent 60%),
+        linear-gradient(180deg,#090a12,#0b0e18 40%,#0a0d17);
       color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',Inter,Roboto,Segoe UI,Arial,sans-serif;
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
-    .container{max-width:720px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
-    .header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(1.2) blur(12px);
-      background:linear-gradient(to bottom, rgba(10,10,16,.85), rgba(10,10,16,.6));
-      border-bottom:1px solid rgba(255,255,255,.06)}
+    .container{max-width:760px;margin:0 auto;padding:0 16px calc(100px + env(safe-area-inset-bottom))}
+    .header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(1.2) blur(14px);
+      background:linear-gradient(to bottom, rgba(9,10,18,.9), rgba(9,10,18,.55));
+      border-bottom:1px solid rgba(255,255,255,.07)}
     .header-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 0}
-    .brand{display:flex;gap:10px;align-items:center}
-    .logo{width:36px;height:36px;border-radius:12px;background:conic-gradient(from 180deg at 50% 50%, var(--brand) 0deg, var(--brand-2) 160deg, var(--brand) 360deg);
-      display:grid;place-items:center;box-shadow:0 10px 24px rgba(124,140,255,.35)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:40px;height:40px;border-radius:14px;
+      background:conic-gradient(from 180deg at 50% 50%, var(--brand) 0deg, var(--brand-2) 150deg, var(--brand) 360deg);
+      display:grid;place-items:center;box-shadow:0 18px 36px rgba(122,162,255,.45)}
     .logo i{color:white}
-    .title{font-weight:800;letter-spacing:.2px}
+    .title{font-weight:900;letter-spacing:.2px}
     .kpis{display:flex;gap:8px;align-items:center}
-    .pill{display:flex;gap:8px;align-items:center;border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      padding:8px 12px;border-radius:14px;font-size:13px;font-weight:700}
-    .pill i{opacity:.9}
+    .pill{display:flex;gap:8px;align-items:center;border:1px solid rgba(255,255,255,.09);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      padding:8px 12px;border-radius:14px;font-size:13px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+    .pill i{opacity:.95}
     .hint{color:var(--muted);font-size:12px}
-    .epochbar{height:3px;width:100%;background:rgba(255,255,255,.06)}
+    .epochbar{height:3px;width:100%;background:rgba(255,255,255,.08)}
     .epochbar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .4s ease}
     .section{display:none;animation:fade .25s ease}.section.active{display:block}
     @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     .pinned{margin:16px 0;position:relative;border-radius:18px;overflow:hidden}
     .pinned::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
-      background:linear-gradient(120deg, rgba(124,140,255,.45), rgba(154,107,255,.2) 40%, rgba(124,140,255,.45));
+      background:linear-gradient(120deg, rgba(122,162,255,.5), rgba(162,118,255,.25) 40%, rgba(122,162,255,.5));
       -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
-    .pinned__card{position:relative;background:linear-gradient(180deg,rgba(124,140,255,.14),rgba(124,140,255,.03));backdrop-filter:blur(8px);border-radius:inherit}
-    .pinned__head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed rgba(255,255,255,.12)}
-    .pinned__label{display:flex;gap:10px;align-items:center;color:var(--brand);font-weight:800}
-    .pinned__timer{display:flex;gap:8px;align-items:center;background:rgba(124,140,255,.25);border:1px solid rgba(124,140,255,.4);
-      padding:6px 10px;border-radius:10px;font-weight:800}
+    .pinned__card{position:relative;background:linear-gradient(180deg,rgba(122,162,255,.16),rgba(122,162,255,.04));backdrop-filter:blur(10px);border-radius:inherit}
+    .pinned__head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed rgba(255,255,255,.14)}
+    .pinned__label{display:flex;gap:10px;align-items:center;color:var(--brand);font-weight:900}
+    .pinned__timer{display:flex;gap:8px;align-items:center;background:rgba(122,162,255,.25);border:1px solid rgba(122,162,255,.45);
+      padding:6px 10px;border-radius:10px;font-weight:900}
     .pinned__body{padding:16px}
     .pinned__meta{display:flex;gap:14px;color:var(--muted);font-size:13px;margin-top:8px}
     .queue{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-top:8px}
-    .card{position:relative;background:var(--card);border-radius:var(--radius);padding:16px;margin:12px 0;box-shadow:var(--shadow);
-      border:1px solid rgba(255,255,255,.06);transition:transform .15s ease, box-shadow .2s ease}
-    .card:hover{transform:translateY(-1px);box-shadow:0 14px 44px rgba(0,0,0,.33)}
+    .card{position:relative;background:linear-gradient(180deg,#14182a,#121628);
+      border-radius:var(--radius);padding:16px;margin:12px 0;box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.07);transition:transform .15s ease, box-shadow .25s ease}
+    .card:hover{transform:translateY(-1px);box-shadow:0 20px 54px rgba(0,0,0,.45)}
     .card::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .2s ease;
-      background:linear-gradient(120deg, rgba(124,140,255,.45), rgba(154,107,255,.25), rgba(124,140,255,.45));
+      background:linear-gradient(120deg, rgba(122,162,255,.5), rgba(162,118,255,.3), rgba(122,162,255,.5));
       -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
-    .card:hover::after{opacity:.8}
+    .card:hover::after{opacity:.85}
     .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
     .user{display:flex;gap:12px;align-items:center}
-    .avatar{position:relative;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;font-weight:800}
+    .avatar{position:relative;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand-2));display:grid;place-items:center;font-weight:900}
     .dot{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;border:2px solid var(--card)}.dot.online{background:var(--ok)}
-    .name{font-weight:800}.meta{color:var(--muted);font-size:12px;margin-top:2px}
+    .name{font-weight:900}.meta{color:var(--muted);font-size:12px;margin-top:2px}
     .content{margin:12px 0 10px;line-height:1.6;font-size:15px}
     .stats{display:flex;gap:14px;color:var(--muted);font-size:12px}
     .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
-    .btn{position:relative;isolation:isolate;display:flex;gap:8px;align-items:center;justify-content:center;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer;transition:transform .08s ease}
+    .btn{position:relative;isolation:isolate;display:flex;gap:8px;align-items:center;justify-content:center;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.09);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));color:var(--text);font-weight:900;cursor:pointer;transition:transform .08s ease}
     .btn:active{transform:translateY(1px)} .btn:hover{box-shadow:var(--ring)} .btn[disabled]{opacity:.45;cursor:not-allowed}
-    .btn.like.liked{border-color:rgba(255,107,107,.35);background:linear-gradient(180deg, rgba(255,107,107,.18), rgba(255,255,255,.02));color:#ff7f88}
-    .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:12px}
-    .badge.rocket{color:var(--ok);border-color:rgba(67,214,163,.35);background:linear-gradient(180deg, rgba(67,214,163,.16), rgba(255,255,255,.02))}
+    .btn.like.liked{border-color:rgba(255,107,107,.4);background:linear-gradient(180deg, rgba(255,107,107,.2), rgba(255,255,255,.02));color:#ff8a92}
+    .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.13);font-size:12px}
+    .badge.rocket{color:var(--ok);border-color:rgba(67,214,163,.4);background:linear-gradient(180deg, rgba(67,214,163,.18), rgba(255,255,255,.02))}
     .burst{position:absolute;inset:0;pointer-events:none}
     .heart{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(.8);opacity:0;animation:fly 700ms ease forwards}
     @keyframes fly{0%{opacity:0;transform:translate(-50%,0) scale(.6)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,-36px) scale(1)}}
     .empty{padding:48px 20px;text-align:center;color:var(--muted)}
-    .nav{position:fixed;left:0;right:0;bottom:0;backdrop-filter:blur(12px);background:linear-gradient(to top, rgba(10,10,16,.9), rgba(10,10,16,.6));
-      border-top:1px solid rgba(255,255,255,.06);padding:10px 8px calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(6,1fr);gap:8px;z-index:60}
+    .nav{position:fixed;left:0;right:0;bottom:0;backdrop-filter:blur(14px);background:linear-gradient(to top, rgba(9,10,18,.92), rgba(9,10,18,.6));
+      border-top:1px solid rgba(255,255,255,.07);padding:10px 8px calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(6,1fr);gap:8px;z-index:60}
     .nav button{border:none;background:none;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center;padding:8px 6px;border-radius:10px;font-size:11px}
-    .nav button.active{color:var(--brand);background:rgba(124,140,255,.14)}
-    .fab{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;display:grid;place-items:center;border:none;cursor:pointer;
+    .nav button.active{color:var(--brand);background:rgba(122,162,255,.16)}
+    .fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;display:grid;place-items:center;border:none;cursor:pointer;
       background:conic-gradient(from 180deg at 50% 50%, var(--brand) 0deg, var(--brand-2) 160deg, var(--brand) 360deg); color:white;
-      box-shadow:0 16px 44px rgba(124,140,255,.55);z-index:55}
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:80}
-    .modal__card{width:min(92vw,460px);max-height:84vh;overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:var(--card);padding:18px}
+      box-shadow:0 20px 56px rgba(122,162,255,.6);z-index:55}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:80}
+    .modal__card{width:min(92vw,460px);max-height:84vh;overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:var(--card);padding:18px}
     .modal__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    .modal__title{font-weight:800}.close{border:none;background:none;color:var(--muted);font-size:20px;cursor:pointer}
+    .modal__title{font-weight:900}.close{border:none;background:none;color:var(--muted);font-size:20px;cursor:pointer}
     .label{font-size:13px;color:var(--muted);margin:8px 0}
-    .input,.textarea,select{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#0f111a;color:var(--text)}
+    .input,.textarea,select{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:#0f1324;color:var(--text)}
     .textarea{min-height:120px;resize:vertical}
     .submit{width:100%;margin-top:10px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .stat{background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06);
+    .stat{background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);
       border-radius:16px;padding:16px;text-align:center}
     .stat .v{font-size:20px;font-weight:900}.muted{color:var(--muted)}
-    .pool{margin:16px 0;padding:16px;border-radius:18px;border:1px solid rgba(67,214,163,.35);
-      background:linear-gradient(180deg, rgba(67,214,163,.16), rgba(67,214,163,.04))}
+    .pool{margin:16px 0;padding:16px;border-radius:18px;border:1px solid rgba(67,214,163,.4);
+      background:linear-gradient(180deg, rgba(67,214,163,.2), rgba(67,214,163,.05))}
     .tabs{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
-    .tab{padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.03);cursor:pointer;color:var(--muted);font-weight:700}
+    .tab{padding:8px 10px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(255,255,255,.04);cursor:pointer;color:var(--muted);font-weight:800}
     .tab.active{color:var(--brand);box-shadow:var(--ring)}
     .toast{position:fixed;right:16px;top:86px;z-index:90;display:grid;gap:8px}
-    .toast .t{padding:12px 14px;border-radius:12px;color:#0b0b0f;font-weight:800}
-    .t.ok{background:#43d6a3}.t.err{background:#ff7f88}.t.info{background:#7c8cff}
-    @media(hover:hover){::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:10px}::-webkit-scrollbar-track{background:transparent}}
+    .toast .t{padding:12px 14px;border-radius:12px;color:#0b0b0f;font-weight:900}
+    .t.ok{background:#43d6a3}.t.err{background:#ff7f88}.t.info{background:#7aa2ff}
+    @media(hover:hover){::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:10px}::-webkit-scrollbar-track{background:transparent}}
   </style>
 </head>
 <body>
@@ -118,8 +120,11 @@
   <script>
     (function telegramOnlyGate(){
       const tg = window.Telegram?.WebApp;
+      // Подставляем ник бота (без @). Если вдруг вставили с @ — уберём.
+      let BOT = 't11stMini_bot';
+      if (BOT.startsWith('@')) BOT = BOT.slice(1);
+
       if(!tg || !tg.initDataUnsafe?.user){
-        const BOT = 'YOUR_BOT_USERNAME'; // <-- замените на имя бота без @
         const deepLink = `https://t.me/${BOT}?startapp=go`;
         document.body.innerHTML = `
           <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
@@ -127,10 +132,10 @@
               text-align:center;padding:24px">
             <div style="max-width:520px;background:#141622;border:1px solid rgba(255,255,255,.08);
                 border-radius:16px;padding:24px">
-              <div style="font-size:22px;font-weight:800;margin-bottom:8px">Откройте через Telegram</div>
+              <div style="font-size:22px;font-weight:900;margin-bottom:8px">Откройте через Telegram</div>
               <div style="color:#99a2b3;margin-bottom:16px">Это мини-приложение доступно только внутри Telegram. Нажмите кнопку ниже.</div>
               <a href="${deepLink}" style="display:inline-block;padding:12px 16px;border-radius:12px;
-                  background:linear-gradient(135deg,#7c8cff,#9a6bff);color:white;font-weight:800;text-decoration:none">
+                  background:linear-gradient(135deg,#7aa2ff,#a276ff);color:white;font-weight:900;text-decoration:none">
                 Открыть в Telegram
               </a>
               <div style="color:#99a2b3;font-size:12px;margin-top:10px">t.me/${BOT}</div>
@@ -185,13 +190,14 @@
 
     <section id="feed-section" class="section active">
       <div class="tabs" id="feed-tabs">
-        <button class="tab active" data-filter="friends"><i class="fa-solid fa-user-group"></i> Друзья</button>
-        <button class="tab" data-filter="all"><i class="fa-solid fa-globe"></i> Все</button>
+        <!-- По умолчанию активна вкладка "Все", чтобы свой пост был виден сразу -->
+        <button class="tab" data-filter="friends"><i class="fa-solid fa-user-group"></i> Друзья</button>
+        <button class="tab active" data-filter="all"><i class="fa-solid fa-globe"></i> Все</button>
       </div>
       <div id="feed"></div>
       <div class="empty" id="feed-empty" style="display:none">
         <i class="fa-regular fa-newspaper" style="font-size:42px"></i>
-        <div style="margin-top:8px">Здесь будут посты друзей. Добавьте друзей через их @username или ID.</div>
+        <div style="margin-top:8px">Здесь будут посты. Нажмите «+» и опубликуйте первый пост.</div>
       </div>
     </section>
 
@@ -356,15 +362,14 @@
           const data = msg.data && msg.data.type ? msg.data : { type: msg.name, payload: msg.data, ts: Date.now() };
           listeners.forEach(fn=> fn(data));
         });
-        // попытка подтянуть историю последних сообщений (если доступно в аккаунте)
         try{
-          const page = await chan.history({limit:100}); // последние 100
+          const page = await chan.history({limit:100});
           const items = page?.items||[];
           for(let i=items.length-1;i>=0;i--){
             const m=items[i]; const data = m.data && m.data.type ? m.data : { type:m.name, payload:m.data, ts: Date.parse(m.timestamp) || Date.now() };
             listeners.forEach(fn=> fn(data));
           }
-        }catch(e){ /* history может быть недоступна — ок */ }
+        }catch(e){}
       }catch(e){ console.warn('Ably init failed',e); }
     }
     initAbly();
@@ -388,12 +393,12 @@
     transactions:{}, moderation:{ reports:[] },
     social:{ following:{}, followers:{} },
     presence:{},
-    ui:{ currentPostId:null, feedFilter:'friends' }
+    ui:{ currentPostId:null, feedFilter:'all' } // по умолчанию "Все"
   };
 
-  const save=()=> localStorage.setItem('diamond-feed-v17', JSON.stringify(state, (k,v)=> v instanceof Date ? {__t:'d',v:v.toISOString()}: v));
+  const save=()=> localStorage.setItem('diamond-feed-v171', JSON.stringify(state, (k,v)=> v instanceof Date ? {__t:'d',v:v.toISOString()}: v));
   const revive=(o)=>{ if(!o||typeof o!=='object') return o; if(o.__t==='d') return new Date(o.v); for(const k of Object.keys(o)) o[k]=revive(o[k]); return o; };
-  const load=()=> { const raw=localStorage.getItem('diamond-feed-v17'); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ console.warn(e); return false; } };
+  const load=()=> { const raw=localStorage.getItem('diamond-feed-v171'); if(!raw) return false; try{ state=revive(JSON.parse(raw)); return true; }catch(e){ console.warn(e); return false; } };
 
   function ensureSets(){
     const F=state.social.following, R=state.social.followers;
@@ -696,7 +701,6 @@
     const tab=e.target.closest('.tabs .tab'); if(tab && tab.closest('#feed-tabs')){ document.querySelectorAll('#feed-tabs .tab').forEach(t=> t.classList.remove('active')); tab.classList.add('active'); state.ui.feedFilter=tab.dataset.filter; renderFeed(); }
     const lbtab=e.target.closest('.tabs .tab'); if(lbtab && !lbtab.closest('#feed-tabs')){ document.querySelectorAll('#lb-section .tab').forEach(t=> t.classList.remove('active')); lbtab.classList.add('active'); renderLeaderboard(getActiveLbTab()); }
     const storePack=e.target.closest('#modal-store [data-pack]'); if(storePack){ buyPack(parseInt(storePack.dataset.pack,10)); }
-    if(e.target.id==='friend-add'){ /* handled via onclick binding below */ }
   });
   function getActiveLbTab(){ const active=Array.from(document.querySelectorAll('#lb-section .tab')).find(x=> x.classList.contains('active')); return active?.dataset.epoch || 'current'; }
 
@@ -709,11 +713,8 @@
   byId('friend-add').onclick=()=>{
     const v=byId('friend-input').value.trim(); if(!v) return;
     const uid=state.currentUserId; let targetId=null;
-    if(v.startsWith('@')){ const name=v.slice(1); // нет адресной книги — добавим «пустую карточку» имени до первого события от друга
-      // Вы можете расширить: подтягивать профиль через ваш бот по username (сервером)
-      targetId = name; // временно используем username как id
-      state.users[targetId] ||= {id:targetId, firstName:'@'+name, username:name, diamonds:0};
-    } else { targetId=String(v); state.users[targetId] ||= {id:targetId, firstName:'User '+targetId, username:'user'+targetId, diamonds:0}; }
+    if(v.startsWith('@')){ const name=v.slice(1); targetId = name; state.users[targetId] ||= {id:targetId, firstName:'@'+name, username:name, diamonds:0}; }
+    else { targetId=String(v); state.users[targetId] ||= {id:targetId, firstName:'User '+targetId, username:'user'+targetId, diamonds:0}; }
     follow(uid, targetId); byId('friend-input').value='';
   };
 
@@ -723,7 +724,6 @@
     switch(evt.type){
       case 'post:new': {
         const p=deserializePost(evt.payload.post);
-        // Регистрируем автора, если его ещё не знаем
         state.users[p.authorId] ||= {id:p.authorId, firstName:'User '+p.authorId, username:'user'+p.authorId, diamonds:0};
         if(!state.posts.find(x=>x.id===p.id)){ state.posts.unshift(p); renderFeed(); save(); }
         break;
@@ -762,16 +762,15 @@
   function deserializePost(p){ return { ...p, createdAt:new Date(p.createdAt), boostedAt:p.boostedAt? new Date(p.boostedAt):null } }
 
   /* === Tickers === */
-  const readIOSetup=()=> setTimeout(attachReadObserver, 0);
   setInterval(()=>{ renderHUD(); pinTicker(); settlementTick(); renderPinned(); pingPresence(); }, 1000);
 
   /* === Boot === */
   applyTelegramTheme();
   if(!load()){ initUser(); }
-  else { try{ initUser(); }catch(e){} } // на случай смены устройства/кеша
+  else { try{ initUser(); }catch(e){} }
   ensureSets();
   state.pool.epoch=toUtcYMD(); state.pool.endsAt=epochEndsAt(); ensureEpochStructures(state.pool.epoch);
-  renderAll(); readIOSetup();
+  renderAll(); setTimeout(attachReadObserver,0);
   } // end if !__STOP_APP__
   </script>
 </body>
