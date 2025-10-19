@@ -5,34 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diamond Feed</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background: #0f0f0f;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
             color: #ffffff;
-            line-height: 1.6;
+            line-height: 1.5;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 100%;
             margin: 0 auto;
-            padding: 0 16px;
+            padding: 0 16px 80px 16px;
         }
 
         /* Header */
         .header {
-            background: #1a1a1a;
-            padding: 12px 0;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 16px 0;
             position: sticky;
             top: 0;
-            z-index: 100;
-            border-bottom: 1px solid #333;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header-content {
@@ -41,145 +44,188 @@
             align-items: center;
         }
 
+        .logo {
+            font-weight: 700;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         .balance-section {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
         }
 
         .balance-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border: 1px solid rgba(102, 126, 234, 0.3);
             padding: 8px 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 13px;
             font-weight: 600;
+            backdrop-filter: blur(10px);
         }
 
         .points-card {
-            background: linear-gradient(135deg, #f093fb, #f5576c);
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(245, 87, 108, 0.2));
+            border: 1px solid rgba(245, 87, 108, 0.3);
             padding: 8px 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 13px;
             font-weight: 600;
+            backdrop-filter: blur(10px);
         }
 
-        /* Navigation */
-        .nav-tabs {
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
             display: flex;
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 4px;
-            margin: 12px 0;
-            overflow-x: auto;
+            justify-content: space-around;
+            z-index: 1000;
         }
 
-        .nav-tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
             background: none;
             border: none;
             color: #888;
-            font-size: 13px;
+            font-size: 11px;
             cursor: pointer;
-            border-radius: 8px;
-            white-space: nowrap;
-            min-width: 70px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            min-width: 60px;
         }
 
-        .nav-tab.active {
-            background: #667eea;
-            color: white;
+        .nav-btn.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .nav-btn i {
+            font-size: 18px;
         }
 
         /* Pinned Post */
         .pinned-section {
-            margin: 12px 0;
-            background: #1a1a1a;
-            border-radius: 12px;
+            margin: 16px 0;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 20px;
             padding: 0;
             border: 2px solid #667eea;
             overflow: hidden;
+            backdrop-filter: blur(10px);
         }
 
         .pinned-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 16px 20px;
             background: rgba(102, 126, 234, 0.1);
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .pinned-label {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 13px;
+            gap: 8px;
+            font-size: 14px;
             font-weight: 600;
             color: #667eea;
         }
 
         .pinned-timer {
             background: #667eea;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
             font-weight: 600;
         }
 
         /* Feed */
         .feed {
-            margin: 12px 0;
+            margin: 16px 0;
         }
 
         .post-card {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 10px;
-            border: 1px solid #333;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .post-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            align-items: flex-start;
+            margin-bottom: 16px;
         }
 
         .author-info {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            flex: 1;
         }
 
         .author-avatar {
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
+            font-size: 16px;
             font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .author-details {
+            flex: 1;
+            min-width: 0;
         }
 
         .author-name {
             font-weight: 600;
-            font-size: 14px;
+            font-size: 16px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .post-time {
             color: #888;
-            font-size: 11px;
+            font-size: 12px;
         }
 
         .post-content {
-            margin-bottom: 14px;
-            line-height: 1.5;
-            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.6;
+            font-size: 15px;
             word-wrap: break-word;
             overflow-wrap: break-word;
             max-width: 100%;
@@ -189,8 +235,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            font-size: 11px;
+            margin-bottom: 16px;
+            font-size: 12px;
             color: #888;
         }
 
@@ -201,59 +247,75 @@
 
         .action-btn {
             flex: 1;
-            padding: 10px 12px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: 12px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
+            backdrop-filter: blur(10px);
         }
 
         .like-btn {
-            background: #333;
+            background: rgba(51, 51, 51, 0.8);
             color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .like-btn.liked {
-            background: #f5576c;
-            color: white;
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+            border: 1px solid rgba(245, 87, 108, 0.3);
         }
 
         .boost-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
         }
 
         .pin-btn {
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            color: white;
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.2));
+            color: #4ecdc4;
+            border: 1px solid rgba(78, 205, 196, 0.3);
         }
 
         .action-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .action-btn:not(:disabled):hover {
+            transform: translateY(-1px);
         }
 
         /* Create Post */
         .create-post {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             right: 20px;
-            width: 56px;
-            height: 56px;
+            width: 60px;
+            height: 60px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             border: none;
             border-radius: 50%;
             color: white;
             font-size: 24px;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+
+        .create-post:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6);
         }
 
         /* Modal */
@@ -265,6 +327,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
             z-index: 2000;
         }
 
@@ -273,24 +336,26 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #1a1a1a;
-            padding: 20px;
-            border-radius: 16px;
+            background: rgba(26, 26, 26, 0.95);
+            padding: 24px;
+            border-radius: 24px;
             width: 90%;
-            max-width: 380px;
-            max-height: 90vh;
+            max-width: 400px;
+            max-height: 80vh;
             overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .modal-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
         }
 
@@ -298,54 +363,73 @@
             background: none;
             border: none;
             color: #888;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
             padding: 4px;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 6px;
-            font-size: 13px;
+            margin-bottom: 8px;
+            font-size: 14px;
             color: #888;
+            font-weight: 500;
         }
 
         .form-input, .form-textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            background: #0f0f0f;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(15, 15, 15, 0.8);
             color: white;
-            font-size: 14px;
+            font-size: 15px;
+            transition: border-color 0.3s ease;
         }
 
         .form-textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 120px;
             font-family: inherit;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         .submit-btn {
             width: 100%;
-            padding: 12px;
+            padding: 16px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             color: white;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
         .cost-info {
             text-align: center;
-            margin-top: 8px;
-            font-size: 12px;
+            margin-top: 12px;
+            font-size: 13px;
             color: #888;
         }
 
@@ -353,357 +437,234 @@
         .packs-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 16px 0;
+            gap: 12px;
+            margin: 20px 0;
         }
 
         .pack-card {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 14px;
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .pack-card:hover {
+            transform: translateY(-2px);
             border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
         }
 
         .pack-amount {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         .pack-price {
-            font-size: 13px;
+            font-size: 14px;
             color: #888;
         }
 
         /* Profile */
         .profile-section {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 12px 0;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 24px;
+            padding: 24px;
+            margin: 16px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .profile-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .profile-avatar {
-            width: 56px;
-            height: 56px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
         }
 
         .profile-name {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .profile-id {
-            font-size: 11px;
+            font-size: 13px;
             color: #888;
-            margin-top: 2px;
+            margin-bottom: 8px;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 16px 0;
+            gap: 12px;
+            margin: 24px 0;
         }
 
         .stat-card {
-            background: #0f0f0f;
-            padding: 14px;
-            border-radius: 10px;
+            background: rgba(15, 15, 15, 0.8);
+            padding: 20px;
+            border-radius: 16px;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .stat-value {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: #888;
-        }
-
-        /* Leaderboard */
-        .leaderboard-list {
-            margin: 12px 0;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            background: #1a1a1a;
-            border-radius: 10px;
+            font-size: 24px;
+            font-weight: 700;
             margin-bottom: 6px;
         }
 
-        .leaderboard-rank {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #667eea;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .leaderboard-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .leaderboard-info {
-            flex: 1;
-        }
-
-        .leaderboard-name {
-            font-weight: 600;
-            margin-bottom: 2px;
-            font-size: 13px;
-        }
-
-        .leaderboard-points {
-            font-size: 11px;
+        .stat-label {
+            font-size: 12px;
             color: #888;
+            font-weight: 500;
         }
 
         /* Pool Info */
         .pool-info {
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            padding: 14px;
-            border-radius: 12px;
-            margin: 12px 0;
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.2));
+            padding: 24px;
+            border-radius: 20px;
+            margin: 16px 0;
             text-align: center;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .pool-amount {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         .pool-label {
-            font-size: 13px;
-            opacity: 0.9;
-        }
-
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #888;
-        }
-
-        .points-earned {
-            background: linear-gradient(135deg, #4ecdc4, #44a08d);
-            color: white;
-            padding: 3px 6px;
-            border-radius: 6px;
-            font-size: 11px;
-            margin-left: 6px;
-        }
-
-        .tg-user-info {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .tg-verified {
-            color: #4ecdc4;
-        }
-
-        /* Auth Screen */
-        .auth-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .auth-title {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .auth-subtitle {
-            color: #888;
-            margin-bottom: 24px;
             font-size: 14px;
+            opacity: 0.9;
+            font-weight: 500;
         }
 
-        .auth-button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-size: 15px;
+        /* Points notification */
+        .points-earned {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(68, 160, 141, 0.2));
+            color: #4ecdc4;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 12px;
+            margin-left: 8px;
+            border: 1px solid rgba(78, 205, 196, 0.3);
         }
 
-        .auth-features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 24px;
+        .section {
+            display: none;
         }
 
-        .auth-feature {
-            background: #1a1a1a;
-            padding: 14px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 13px;
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
 
-        .auth-feature-icon {
-            font-size: 20px;
-            margin-bottom: 6px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .pinned-post-content {
-            padding: 16px;
-        }
-
-        .action-btn-text {
-            font-size: 13px;
-        }
-
-        /* User Switch */
-        .user-switch {
+        /* Online indicator */
+        .online-indicator {
             position: fixed;
             top: 80px;
             right: 20px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 12px;
-            z-index: 1000;
-            min-width: 200px;
+            background: rgba(76, 217, 100, 0.2);
+            color: #4cd964;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(76, 217, 100, 0.3);
+            backdrop-filter: blur(10px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .user-switch-title {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #4cd964;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
             color: #888;
         }
 
-        .user-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px;
-            border: none;
-            background: none;
-            color: white;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            border-radius: 6px;
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        .user-option:hover {
-            background: #333;
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #ccc;
         }
 
-        .user-option.active {
-            background: #667eea;
-        }
-
-        .user-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
+        .empty-state p {
+            font-size: 14px;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
-    <div id="auth-screen" class="auth-screen" style="display: none;">
-        <div class="auth-title">💎 Diamond Feed</div>
-        <div class="auth-subtitle">Платформа с системой наград за активность</div>
-        
-        <button class="auth-button" onclick="initTelegramAuth()">
-            Войти через Telegram
-        </button>
-        
-        <div class="tg-user-info">
-            🔒 Безопасный вход через Telegram
-        </div>
-
-        <div class="auth-features">
-            <div class="auth-feature">
-                <div class="auth-feature-icon">💎</div>
-                <div>Зарабатывайте алмазы</div>
-            </div>
-            <div class="auth-feature">
-                <div class="auth-feature-icon">🏆</div>
-                <div>Участвуйте в пуле наград</div>
-            </div>
-            <div class="auth-feature">
-                <div class="auth-feature-icon">🚀</div>
-                <div>Бустите свои посты</div>
-            </div>
-            <div class="auth-feature">
-                <div class="auth-feature-icon">📊</div>
-                <div>Следите за статистикой</div>
-            </div>
-        </div>
+    <!-- Online Indicator -->
+    <div class="online-indicator">
+        <div class="online-dot"></div>
+        <span>Online</span>
     </div>
 
-    <div id="app-content" class="container" style="display: none;">
+    <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <div class="logo" style="font-weight: 600; font-size: 16px;">💎 Diamond Feed</div>
+                <div class="logo">💎 Diamond Feed</div>
                 <div class="balance-section">
                     <div class="points-card">
                         🏆 <span id="points-today">0</span>
@@ -715,66 +676,57 @@
             </div>
         </header>
 
-        <!-- User Switch -->
-        <div class="user-switch" id="user-switch" style="display: none;">
-            <div class="user-switch-title">👥 Переключить пользователя</div>
-            <div id="user-options">
-                <!-- Users will be loaded here -->
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="nav-tabs">
-            <button class="nav-tab active" onclick="showSection('feed')">📱 Лента</button>
-            <button class="nav-tab" onclick="showSection('leaderboard')">🏆 Топ</button>
-            <button class="nav-tab" onclick="showSection('profile')">👤 Профиль</button>
-            <button class="nav-tab" onclick="showSection('pool')">💰 Пул</button>
-            <button class="nav-tab" onclick="openStoreModal()">🛒 Магазин</button>
-            <button class="nav-tab" onclick="toggleUserSwitch()">👥 Пользователи</button>
-        </nav>
-
         <!-- Pinned Post Section -->
         <section class="pinned-section" id="pinned-section" style="display: none;">
             <div class="pinned-header">
                 <div class="pinned-label">
-                    📌 Закреплено • <span id="pinned-author">Автор</span>
+                    <i class="fas fa-thumbtack"></i>
+                    Закреплено • <span id="pinned-author">Автор</span>
                 </div>
                 <div class="pinned-timer" id="pin-timer">01:00</div>
             </div>
-            <div class="pinned-post-content">
+            <div class="pinned-post-content" style="padding: 20px;">
                 <div class="post-content" id="pinned-content">Содержание закрепленного поста</div>
                 <div class="post-stats">
-                    <span>👁️ <span id="pinned-views">0</span> просмотров</span>
-                    <span>❤️ <span id="pinned-likes">0</span> лайков</span>
+                    <span><i class="far fa-eye"></i> <span id="pinned-views">0</span> просмотров</span>
+                    <span><i class="far fa-heart"></i> <span id="pinned-likes">0</span> лайков</span>
                 </div>
             </div>
         </section>
 
         <!-- Feed Section -->
-        <section class="section" id="feed-section">
+        <section class="section active" id="feed-section">
             <div class="feed" id="feed">
-                <!-- Posts will be loaded here -->
+                <div class="empty-state" id="feed-empty" style="display: none;">
+                    <i class="far fa-newspaper"></i>
+                    <h3>Лента пуста</h3>
+                    <p>Будьте первым, кто опубликует пост!</p>
+                </div>
             </div>
         </section>
 
         <!-- Leaderboard Section -->
-        <section class="section" id="leaderboard-section" style="display: none;">
+        <section class="section" id="leaderboard-section">
             <div class="leaderboard-list" id="leaderboard">
-                <!-- Leaderboard will be loaded here -->
+                <div class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <h3>Рейтинг пуст</h3>
+                    <p>Зарабатывайте баллы за реакции, чтобы подняться в рейтинге</p>
+                </div>
             </div>
         </section>
 
         <!-- Profile Section -->
-        <section class="section" id="profile-section" style="display: none;">
+        <section class="section" id="profile-section">
             <div class="profile-section">
                 <div class="profile-header">
                     <div class="profile-avatar" id="profile-avatar">U</div>
-                    <div>
+                    <div class="profile-info">
                         <div class="profile-name" id="profile-name">Пользователь</div>
                         <div class="profile-id" id="profile-id">ID: 123456</div>
-                        <div class="tg-user-info">
-                            <span class="tg-verified">✓</span>
-                            Подтвержден через Telegram
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888;">
+                            <i class="fas fa-shield-alt" style="color: #4ecdc4;"></i>
+                            <span>Подтвержден через Telegram</span>
                         </div>
                     </div>
                 </div>
@@ -785,7 +737,7 @@
                         <div class="stat-label">Алмазов</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="profile-posts">3</div>
+                        <div class="stat-value" id="profile-posts">0</div>
                         <div class="stat-label">Постов</div>
                     </div>
                     <div class="stat-card">
@@ -806,14 +758,14 @@
         </section>
 
         <!-- Pool Section -->
-        <section class="section" id="pool-section" style="display: none;">
+        <section class="section" id="pool-section">
             <div class="pool-info">
                 <div class="pool-amount" id="current-pool">0 💎</div>
                 <div class="pool-label">Текущий пул наград</div>
             </div>
 
             <div class="profile-section">
-                <h3 style="margin-bottom: 16px; font-size: 16px;">Математика распределения</h3>
+                <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 600;">Математика распределения</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="total-points">0</div>
@@ -821,7 +773,7 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="active-users">0</div>
-                        <div class="stat-label">Активных пользователей</div>
+                        <div class="stat-label">Участников</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="your-points">0</div>
@@ -833,112 +785,130 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Формула распределения:</label>
-                    <div style="background: #0f0f0f; padding: 12px; border-radius: 8px; font-size: 12px; color: #888;">
-                        Доля = Ваши_баллы / Всего_баллов<br>
-                        Награда = Пул × Доля<br>
-                        Баллы НЕ начисляются за просмотры
+                <div style="background: rgba(15, 15, 15, 0.8); padding: 20px; border-radius: 16px; margin-top: 20px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; color: #888; font-weight: 600;">Формула распределения:</h4>
+                    <div style="font-size: 13px; color: #ccc; line-height: 1.6;">
+                        <div style="margin-bottom: 8px;">• <strong>Доля</strong> = Ваши баллы ÷ Всего баллов</div>
+                        <div style="margin-bottom: 8px;">• <strong>Награда</strong> = Пул × Доля</div>
+                        <div style="margin-bottom: 8px;">• <strong>Баллы</strong> = +3 за каждую реакцию</div>
+                        <div>• <strong>Пул</strong> = сумма всех платных действий</div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Create Post Button -->
-        <button class="create-post" onclick="openCreatePostModal()">+</button>
+        <button class="create-post" onclick="openCreatePostModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
 
-        <!-- Modals -->
-        <div class="modal" id="createPostModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Создать пост</div>
-                    <button class="close-btn" onclick="closeCreatePostModal()">×</button>
-                </div>
-                <form onsubmit="createPost(event)">
-                    <div class="form-group">
-                        <label class="form-label">Текст поста (до 500 символов)</label>
-                        <textarea class="form-textarea" id="postText" maxlength="500" placeholder="Что у вас нового?"></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Опубликовать за 10 💎</button>
-                    <div class="cost-info">Будет списано 10 алмазов</div>
-                </form>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="showSection('feed')">
+            <i class="fas fa-home"></i>
+            <span>Лента</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('leaderboard')">
+            <i class="fas fa-trophy"></i>
+            <span>Топ</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('profile')">
+            <i class="fas fa-user"></i>
+            <span>Профиль</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('pool')">
+            <i class="fas fa-coins"></i>
+            <span>Пул</span>
+        </button>
+        <button class="nav-btn" onclick="openStoreModal()">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Магазин</span>
+        </button>
+    </nav>
+
+    <!-- Modals -->
+    <div class="modal" id="createPostModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Создать пост</div>
+                <button class="close-btn" onclick="closeCreatePostModal()">×</button>
             </div>
-        </div>
-
-        <div class="modal" id="boostModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Буст поста</div>
-                    <button class="close-btn" onclick="closeBoostModal()">×</button>
+            <form onsubmit="createPost(event)">
+                <div class="form-group">
+                    <label class="form-label">Текст поста (до 500 символов)</label>
+                    <textarea class="form-textarea" id="postText" maxlength="500" placeholder="Поделитесь чем-то интересным..."></textarea>
                 </div>
-                <p style="margin-bottom: 16px; font-size: 14px;">Поднять пост в топ ленты за 10 алмазов?</p>
-                <button class="submit-btn" onclick="boostPost()">Поднять за 10 💎</button>
+                <button type="submit" class="submit-btn">Опубликовать за 10 💎</button>
                 <div class="cost-info">Будет списано 10 алмазов</div>
-            </div>
+            </form>
         </div>
+    </div>
 
-        <div class="modal" id="pinModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Закрепить пост</div>
-                    <button class="close-btn" onclick="closePinModal()">×</button>
-                </div>
-                <p style="margin-bottom: 16px; font-size: 14px;">Закрепить пост на 1 минуту за 100 алмазов?</p>
-                <button class="submit-btn" onclick="pinPost()">Закрепить за 100 💎</button>
-                <div class="cost-info">Будет списано 100 алмазов</div>
+    <div class="modal" id="boostModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Буст поста</div>
+                <button class="close-btn" onclick="closeBoostModal()">×</button>
             </div>
+            <p style="margin-bottom: 20px; font-size: 15px; color: #ccc; line-height: 1.5;">Поднять пост в топ ленты за 10 алмазов?</p>
+            <button class="submit-btn" onclick="boostPost()">Поднять за 10 💎</button>
+            <div class="cost-info">Будет списано 10 алмазов</div>
         </div>
+    </div>
 
-        <div class="modal" id="storeModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-title">Покупка алмазов</div>
-                    <button class="close-btn" onclick="closeStoreModal()">×</button>
+    <div class="modal" id="pinModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Закрепить пост</div>
+                <button class="close-btn" onclick="closePinModal()">×</button>
+            </div>
+            <p style="margin-bottom: 20px; font-size: 15px; color: #ccc; line-height: 1.5;">Закрепить пост на 1 минуту за 100 алмазов?</p>
+            <button class="submit-btn" onclick="pinPost()">Закрепить за 100 💎</button>
+            <div class="cost-info">Будет списано 100 алмазов</div>
+        </div>
+    </div>
+
+    <div class="modal" id="storeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Покупка алмазов</div>
+                <button class="close-btn" onclick="closeStoreModal()">×</button>
+            </div>
+            <div class="packs-grid">
+                <div class="pack-card" onclick="buyDiamonds(100)">
+                    <div class="pack-amount">100 💎</div>
+                    <div class="pack-price">~1 TON</div>
                 </div>
-                <div class="packs-grid">
-                    <div class="pack-card" onclick="buyDiamonds(100)">
-                        <div class="pack-amount">100 💎</div>
-                        <div class="pack-price">~1 TON</div>
-                    </div>
-                    <div class="pack-card" onclick="buyDiamonds(500)">
-                        <div class="pack-amount">500 💎</div>
-                        <div class="pack-price">~5 TON</div>
-                    </div>
-                    <div class="pack-card" onclick="buyDiamonds(1000)">
-                        <div class="pack-amount">1000 💎</div>
-                        <div class="pack-price">~10 TON</div>
-                    </div>
-                    <div class="pack-card" onclick="buyDiamonds(5000)">
-                        <div class="pack-amount">5000 💎</div>
-                        <div class="pack-price">~50 TON</div>
-                    </div>
+                <div class="pack-card" onclick="buyDiamonds(500)">
+                    <div class="pack-amount">500 💎</div>
+                    <div class="pack-price">~5 TON</div>
+                </div>
+                <div class="pack-card" onclick="buyDiamonds(1000)">
+                    <div class="pack-amount">1000 💎</div>
+                    <div class="pack-price">~10 TON</div>
+                </div>
+                <div class="pack-card" onclick="buyDiamonds(5000)">
+                    <div class="pack-amount">5000 💎</div>
+                    <div class="pack-price">~50 TON</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Telegram WebApp initialization
-        const tg = window.Telegram.WebApp;
-        
-        // State management with localStorage persistence
+        // Enhanced state management with better math and online features
         let state = {
             currentUser: null,
             users: {},
-            posts: [], // Общие посты для всех пользователей
-            userPosts: {}, // Отдельные лайки для каждого пользователя
+            posts: [],
+            userPosts: {},
             points: {},
             pool: {
                 current: 0,
                 totalPoints: 0,
                 participants: 0,
-                epochEnds: new Date(Date.now() + 6 * 60 * 60 * 1000)
-            },
-            limits: {
-                maxReads: 200,
-                maxReactions: 100,
-                maxSameAuthor: 20,
-                minPoints: 5
+                epochEnds: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
             },
             prices: {
                 post: 10,
@@ -946,355 +916,192 @@
                 pin: 100
             },
             pinnedPost: null,
-            pinTimer: null
+            pinTimer: null,
+            onlineUsers: new Set()
         };
 
         // Save state to localStorage
         function saveState() {
-            localStorage.setItem('diamondFeedState', JSON.stringify(state));
+            const stateToSave = {
+                ...state,
+                onlineUsers: Array.from(state.onlineUsers), // Convert Set to Array
+                pinnedPost: state.pinnedPost,
+                pool: {
+                    ...state.pool,
+                    epochEnds: state.pool.epochEnds.getTime() // Convert Date to timestamp
+                },
+                posts: state.posts.map(post => ({
+                    ...post,
+                    createdAt: post.createdAt.getTime()
+                }))
+            };
+            localStorage.setItem('diamondFeedState', JSON.stringify(stateToSave));
         }
 
         // Load state from localStorage
         function loadState() {
-            const saved = localStorage.getItem('diamondFeedState');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                
-                // Restore Date objects
-                if (parsed.pool && parsed.pool.epochEnds) {
+            try {
+                const saved = localStorage.getItem('diamondFeedState');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    
+                    // Restore complex objects
+                    parsed.onlineUsers = new Set(parsed.onlineUsers || []);
                     parsed.pool.epochEnds = new Date(parsed.pool.epochEnds);
+                    parsed.posts = parsed.posts.map(post => ({
+                        ...post,
+                        createdAt: new Date(post.createdAt)
+                    }));
+                    
+                    state = parsed;
+                    return true;
                 }
-                if (parsed.posts) {
-                    parsed.posts.forEach(post => {
-                        post.createdAt = new Date(post.createdAt);
-                    });
-                }
-                
-                state = parsed;
-                return true;
+            } catch (error) {
+                console.error('Error loading state:', error);
             }
             return false;
         }
 
-        // Initialize Telegram WebApp
-        function initTelegramApp() {
-            tg.expand();
-            tg.enableClosingConfirmation();
-            tg.BackButton.hide();
-            
-            // Set theme colors
-            tg.setHeaderColor('#1a1a1a');
-            tg.setBackgroundColor('#0f0f0f');
-            
-            // Try to load saved state first
+        // Initialize app
+        function initApp() {
+            // Try to load saved state
             const hasSavedState = loadState();
             
-            // Check if user is authenticated
-            if (tg.initDataUnsafe.user) {
-                handleTelegramUser(tg.initDataUnsafe.user, !hasSavedState);
-            } else {
-                showAuthScreen();
+            // Initialize with current user if not loaded
+            if (!state.currentUser) {
+                const mockUser = {
+                    id: '1',
+                    firstName: 'Telegram',
+                    lastName: 'User',
+                    username: 'tg_user',
+                    isPremium: false,
+                    diamonds: 100
+                };
+                handleUserLogin(mockUser);
             }
+
+            // Add some demo users if none exist
+            if (Object.keys(state.users).length === 0) {
+                initializeDemoUsers();
+            }
+
+            // Mark current user as online
+            if (state.currentUser) {
+                state.onlineUsers.add(state.currentUser.id);
+            }
+
+            renderAll();
+            startBackgroundServices();
+            saveState();
         }
 
-        // Handle Telegram user data
-        function handleTelegramUser(tgUser, loadSampleData = true) {
-            const userId = tgUser.id.toString();
+        function handleUserLogin(user) {
+            const userId = user.id;
             
-            // Create or update user in state
             if (!state.users[userId]) {
                 state.users[userId] = {
-                    id: userId,
-                    tgId: tgUser.id,
-                    firstName: tgUser.first_name,
-                    lastName: tgUser.last_name || '',
-                    username: tgUser.username,
-                    languageCode: tgUser.language_code,
-                    isPremium: tgUser.is_premium || false,
+                    ...user,
                     diamonds: 100,
                     trust: 1.0,
                     joinedAt: new Date()
                 };
                 
-                // Initialize points for new user (NO POINTS FOR VIEWS)
-                state.points[userId] = { 
-                    reads: 0, 
-                    reactions: 0, 
-                    effective: 0 
-                };
-
-                // Initialize user posts data
+                state.points[userId] = { reads: 0, reactions: 0, effective: 0 };
                 state.userPosts[userId] = {};
             }
             
             state.currentUser = state.users[userId];
-            
-            // Load sample posts only if no saved state and requested
-            if (loadSampleData && state.posts.length === 0) {
-                loadSamplePosts();
-            }
-            
-            showAppContent();
-            initApp();
-            saveState(); // Save after initialization
+            state.onlineUsers.add(userId);
         }
 
-        // Load sample posts with Telegram users
-        function loadSamplePosts() {
-            // Create sample users
-            const sampleUsers = {
-                '2': {
-                    id: '2',
-                    firstName: 'Алексей',
-                    username: 'alexey_tg',
-                    isPremium: true,
-                    diamonds: 250
-                },
-                '3': {
-                    id: '3', 
-                    firstName: 'Мария',
-                    username: 'maria_tg',
-                    isPremium: false,
-                    diamonds: 75
-                },
-                '4': {
-                    id: '4',
-                    firstName: 'Дмитрий',
-                    username: 'dmitry_tg', 
-                    isPremium: true,
-                    diamonds: 500
-                },
-                '5': {
-                    id: '5',
-                    firstName: 'Екатерина',
-                    username: 'ekaterina_tg',
-                    isPremium: false,
-                    diamonds: 150
-                },
-                '6': {
-                    id: '6',
-                    firstName: 'Сергей',
-                    username: 'sergey_tg',
-                    isPremium: true,
-                    diamonds: 300
-                }
-            };
-
-            // Add sample users to state
-            Object.values(sampleUsers).forEach(user => {
-                state.users[user.id] = user;
-                // NO INITIAL POINTS - users start with 0
-                state.points[user.id] = { 
-                    reads: 0, 
-                    reactions: 0, 
-                    effective: 0 
-                };
-                
-                // Initialize user posts data
-                state.userPosts[user.id] = {};
-            });
-
-            // Create shared posts that all users can see
-            state.posts = [
-                {
-                    id: 1,
-                    authorId: '2',
-                    content: 'Привет всем! Это демо-версия ленты с алмазами. Здесь можно публиковать посты, бустить их и зарабатывать баллы за активность.',
-                    timestamp: '5 мин назад',
-                    views: 25,
-                    likes: 12,
-                    isBoosted: false,
-                    isPinned: false,
-                    createdAt: new Date(Date.now() - 5 * 60 * 1000)
-                },
-                {
-                    id: 2,
-                    authorId: '3',
-                    content: 'Отличная идея с системой баллов и распределением пула! Жду, когда можно будет протестировать полную версию.',
-                    timestamp: '12 мин назад',
-                    views: 18,
-                    likes: 8,
-                    isBoosted: true,
-                    isPinned: false,
-                    createdAt: new Date(Date.now() - 12 * 60 * 1000)
-                },
-                {
-                    id: 3,
-                    authorId: '4',
-                    content: 'Уже купил алмазов и тестирую функционал. Система закрепления постов работает отлично!',
-                    timestamp: '20 мин назад',
-                    views: 15,
-                    likes: 6,
-                    isBoosted: false,
-                    isPinned: false,
-                    createdAt: new Date(Date.now() - 20 * 60 * 1000)
-                }
+        function initializeDemoUsers() {
+            const demoUsers = [
+                { id: '2', firstName: 'Алексей', username: 'alexey_tg', isPremium: true, diamonds: 250 },
+                { id: '3', firstName: 'Мария', username: 'maria_tg', isPremium: false, diamonds: 75 },
+                { id: '4', firstName: 'Дмитрий', username: 'dmitry_tg', isPremium: true, diamonds: 500 },
+                { id: '5', firstName: 'Екатерина', username: 'ekaterina_tg', isPremium: false, diamonds: 150 }
             ];
 
-            // Initialize likes for all users
-            Object.keys(state.users).forEach(userId => {
-                state.posts.forEach(post => {
-                    state.userPosts[userId][post.id] = {
-                        isLiked: false
-                    };
-                });
+            demoUsers.forEach(user => {
+                state.users[user.id] = user;
+                state.points[user.id] = { reads: 0, reactions: 0, effective: 0 };
+                state.userPosts[user.id] = {};
+                state.onlineUsers.add(user.id); // Mark as online
             });
+
+            // Add some demo posts
+            if (state.posts.length === 0) {
+                state.posts = [
+                    createPost('2', 'Привет всем! Это демо-версия платформы с системой наград. Публикуйте посты, ставьте лайки и зарабатывайте!'),
+                    createPost('3', 'Отличная идея с распределением пула! Интересно посмотреть, как будет работать система на практике.'),
+                    createPost('4', 'Только что протестировал функционал. Закрепление постов работает отлично! 🚀')
+                ];
+            }
         }
 
-        // Auth functions
-        function showAuthScreen() {
-            document.getElementById('auth-screen').style.display = 'flex';
-            document.getElementById('app-content').style.display = 'none';
-        }
-
-        function showAppContent() {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
-        }
-
-        function initTelegramAuth() {
-            // In real app, this would use Telegram OAuth
-            // For demo, we'll create a mock user
-            const mockUser = {
-                id: Math.floor(Math.random() * 1000000),
-                first_name: 'Telegram',
-                last_name: 'User',
-                username: 'tg_user_' + Math.random().toString(36).substr(2, 5),
-                language_code: 'ru',
-                is_premium: Math.random() > 0.7
+        function createPost(authorId, content) {
+            return {
+                id: Date.now() + Math.random(),
+                authorId,
+                content,
+                timestamp: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+                views: Math.floor(Math.random() * 50) + 10,
+                likes: Math.floor(Math.random() * 20) + 5,
+                isBoosted: false,
+                isPinned: false,
+                createdAt: new Date()
             };
-            
-            handleTelegramUser(mockUser);
         }
 
-        // User switching
-        function toggleUserSwitch() {
-            const userSwitch = document.getElementById('user-switch');
-            userSwitch.style.display = userSwitch.style.display === 'none' ? 'block' : 'none';
-            if (userSwitch.style.display === 'block') {
-                renderUserOptions();
-            }
-        }
-
-        function renderUserOptions() {
-            const userOptions = document.getElementById('user-options');
-            userOptions.innerHTML = '';
-
-            Object.values(state.users).forEach(user => {
-                const userOption = document.createElement('button');
-                userOption.className = `user-option ${user.id === state.currentUser.id ? 'active' : ''}`;
-                userOption.onclick = () => switchUser(user.id);
-                userOption.innerHTML = `
-                    <div class="user-avatar">${getUserAvatarText(user)}</div>
-                    <div>
-                        <div style="font-size: 13px; font-weight: 600;">${getUserDisplayName(user)}</div>
-                        <div style="font-size: 11px; color: #888;">${user.diamonds} 💎 • ${state.points[user.id]?.effective || 0} баллов</div>
-                    </div>
-                `;
-                userOptions.appendChild(userOption);
-            });
-        }
-
-        function switchUser(userId) {
-            state.currentUser = state.users[userId];
-            updateUI();
-            renderFeed();
-            renderLeaderboard();
-            toggleUserSwitch();
-            saveState(); // Save after switching user
-            showPointsNotification(`Переключен на ${getUserDisplayName(state.currentUser)}`);
-        }
-
-        // Initialize the app
-        function initApp() {
-            renderFeed();
-            renderLeaderboard();
-            updateUI();
-            startEpochTimer();
-            
-            // Restore pinned post timer if exists
-            if (state.pinnedPost && state.pinTimer === null) {
-                updatePinnedSection();
-            }
-        }
-
-        // Navigation
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected section and activate tab
-            document.getElementById(sectionName + '-section').style.display = 'block';
-            event.target.classList.add('active');
-        }
-
-        // User avatar functions
-        function getUserAvatarText(user) {
-            if (user.firstName) {
-                return user.firstName.charAt(0).toUpperCase();
-            }
-            if (user.username) {
-                return user.username.charAt(0).toUpperCase();
-            }
-            return 'U';
-        }
-
-        function getUserDisplayName(user) {
-            if (user.firstName && user.lastName) {
-                return `${user.firstName} ${user.lastName}`;
-            }
-            if (user.firstName) {
-                return user.firstName;
-            }
-            if (user.username) {
-                return `@${user.username}`;
-            }
-            return 'Пользователь';
-        }
-
-        // Mathematical functions
+        // Enhanced mathematical functions
         function calculateUserShare(userId) {
             const userPoints = state.points[userId]?.effective || 0;
-            if (userPoints < state.limits.minPoints) return 0;
+            const totalPoints = state.pool.totalPoints || 1;
             
-            return userPoints / (state.pool.totalPoints || 1);
+            if (userPoints < 1 || totalPoints < 1) return 0;
+            
+            // Enhanced formula with trust multiplier
+            const trust = state.users[userId]?.trust || 1.0;
+            const rawShare = userPoints / totalPoints;
+            return Math.min(rawShare * trust, 0.3); // Cap at 30% to prevent dominance
         }
 
         function calculateEstimatedReward(userId) {
             const share = calculateUserShare(userId);
-            return state.pool.current * share;
-        }
-
-        function calculatePoolContribution(action) {
-            const contributions = {
-                post: state.prices.post,
-                boost: state.prices.boost,
-                pin: state.prices.pin
-            };
-            return contributions[action] || 0;
+            return Math.floor(state.pool.current * share * 100) / 100; // Round to 2 decimal places
         }
 
         function updatePool(action) {
-            const contribution = calculatePoolContribution(action);
+            const contribution = state.prices[action] || 0;
             state.pool.current += contribution;
-            state.pool.totalPoints = Object.values(state.points).reduce((sum, p) => sum + p.effective, 0);
+            
+            // Recalculate total points
+            state.pool.totalPoints = Object.values(state.points).reduce((sum, p) => sum + (p.effective || 0), 0);
             state.pool.participants = Object.keys(state.points).filter(id => 
-                state.points[id].effective >= state.limits.minPoints
+                (state.points[id]?.effective || 0) > 0
             ).length;
         }
 
         // Render functions
+        function renderAll() {
+            renderFeed();
+            renderLeaderboard();
+            updateUI();
+            updatePinnedSection();
+        }
+
         function renderFeed() {
             const feed = document.getElementById('feed');
-            feed.innerHTML = '';
-
+            const emptyState = document.getElementById('feed-empty');
+            
+            if (state.posts.length === 0) {
+                feed.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
             // Sort posts: pinned > boosted > recent
             const sortedPosts = [...state.posts].sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
@@ -1304,53 +1111,145 @@
                 return new Date(b.createdAt) - new Date(a.createdAt);
             });
 
-            sortedPosts.forEach(post => {
+            feed.innerHTML = sortedPosts.map(post => {
+                if (post.isPinned && state.pinnedPost && post.id === state.pinnedPost.id) return '';
+                
                 const author = state.users[post.authorId];
                 const isAuthor = post.authorId === state.currentUser.id;
-                const userPostData = state.userPosts[state.currentUser.id][post.id] || { isLiked: false };
+                const userPostData = state.userPosts[state.currentUser.id]?.[post.id] || { isLiked: false };
+                const isOnline = state.onlineUsers.has(post.authorId);
                 
-                if (!author) return;
+                if (!author) return '';
                 
-                // Skip pinned post as it's shown separately
-                if (post.isPinned && state.pinnedPost && post.id === state.pinnedPost.id) return;
-                
-                const postElement = document.createElement('div');
-                postElement.className = 'post-card';
-                postElement.innerHTML = `
-                    <div class="post-header">
-                        <div class="author-info">
-                            <div class="author-avatar">${getUserAvatarText(author)}</div>
-                            <div class="author-name">
-                                ${getUserDisplayName(author)}
-                                ${author.isPremium ? ' <span style="color: #4ecdc4;">⭐</span>' : ''}
-                                ${isAuthor ? ' <span style="color: #4ecdc4;">(Вы)</span>' : ''}
+                return `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="author-info">
+                                <div class="author-avatar">${getUserAvatarText(author)}</div>
+                                <div class="author-details">
+                                    <div class="author-name">
+                                        ${getUserDisplayName(author)}
+                                        ${author.isPremium ? ' <i class="fas fa-star" style="color: #4ecdc4;"></i>' : ''}
+                                        ${isAuthor ? ' <span style="color: #667eea;">(Вы)</span>' : ''}
+                                    </div>
+                                    <div class="post-time">
+                                        ${post.timestamp}
+                                        ${isOnline ? ' • <span style="color: #4cd964;">online</span>' : ''}
+                                    </div>
+                                </div>
                             </div>
-                            ${post.isBoosted ? '<span class="points-earned">🚀 Буст</span>' : ''}
+                            ${post.isBoosted ? '<div class="points-earned"><i class="fas fa-rocket"></i> Буст</div>' : ''}
                         </div>
-                        <div class="post-time">${post.timestamp}</div>
-                    </div>
-                    <div class="post-content">${post.content}</div>
-                    <div class="post-stats">
-                        <span>👁️ ${post.views} просмотров</span>
-                        <span>❤️ ${post.likes} лайков</span>
-                    </div>
-                    <div class="post-actions">
-                        <button class="action-btn like-btn ${userPostData.isLiked ? 'liked' : ''}" 
-                                onclick="likePost(${post.id})" ${isAuthor ? 'disabled' : ''}>
-                            ${userPostData.isLiked ? '❤️' : '🤍'} <span class="action-btn-text">Лайк</span>
-                        </button>
-                        ${isAuthor && !post.isPinned ? `
-                            <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})" ${post.isBoosted ? 'disabled' : ''}>
-                                🚀 <span class="action-btn-text">Буст</span>
+                        <div class="post-content">${post.content}</div>
+                        <div class="post-stats">
+                            <span><i class="far fa-eye"></i> ${post.views} просмотров</span>
+                            <span><i class="far fa-heart"></i> ${post.likes} лайков</span>
+                        </div>
+                        <div class="post-actions">
+                            <button class="action-btn like-btn ${userPostData.isLiked ? 'liked' : ''}" 
+                                    onclick="likePost(${post.id})" ${isAuthor ? 'disabled' : ''}>
+                                <i class="${userPostData.isLiked ? 'fas' : 'far'} fa-heart"></i>
+                                <span>Лайк</span>
                             </button>
-                            <button class="action-btn pin-btn" onclick="openPinModal(${post.id})" ${state.pinnedPost ? 'disabled' : ''}>
-                                📌 <span class="action-btn-text">Закреп</span>
-                            </button>
-                        ` : ''}
+                            ${isAuthor && !post.isPinned ? `
+                                <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})" ${post.isBoosted ? 'disabled' : ''}>
+                                    <i class="fas fa-rocket"></i>
+                                    <span>Буст</span>
+                                </button>
+                                <button class="action-btn pin-btn" onclick="openPinModal(${post.id})" ${state.pinnedPost ? 'disabled' : ''}>
+                                    <i class="fas fa-thumbtack"></i>
+                                    <span>Закреп</span>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
-                feed.appendChild(postElement);
-            });
+            }).join('');
+        }
+
+        function renderLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            
+            const sortedUsers = Object.entries(state.points)
+                .map(([userId, points]) => ({
+                    userId,
+                    points: points.effective,
+                    ...state.users[userId]
+                }))
+                .filter(user => user.points > 0)
+                .sort((a, b) => b.points - a.points)
+                .slice(0, 10);
+
+            if (sortedUsers.length === 0) {
+                leaderboard.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-trophy"></i>
+                        <h3>Рейтинг пуст</h3>
+                        <p>Зарабатывайте баллы за реакции, чтобы подняться в рейтинге</p>
+                    </div>
+                `;
+                return;
+            }
+
+            leaderboard.innerHTML = sortedUsers.map((user, index) => {
+                const reward = calculateEstimatedReward(user.userId);
+                const isOnline = state.onlineUsers.has(user.userId);
+                const isCurrent = user.userId === state.currentUser.id;
+                
+                return `
+                    <div class="post-card">
+                        <div class="author-info">
+                            <div class="author-avatar" style="background: ${getRankColor(index + 1)};">${index + 1}</div>
+                            <div class="author-details">
+                                <div class="author-name">
+                                    ${getUserDisplayName(user)}
+                                    ${user.isPremium ? ' <i class="fas fa-star" style="color: #4ecdc4;"></i>' : ''}
+                                    ${isCurrent ? ' <span style="color: #667eea;">(Вы)</span>' : ''}
+                                </div>
+                                <div class="post-time">
+                                    ${user.points} баллов • ~${reward} 💎
+                                    ${isOnline ? ' • <span style="color: #4cd964;">online</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getRankColor(rank) {
+            const colors = {
+                1: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                2: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)',
+                3: 'linear-gradient(135deg, #CD7F32, #A0522D)'
+            };
+            return colors[rank] || 'linear-gradient(135deg, #667eea, #764ba2)';
+        }
+
+        function updateUI() {
+            if (!state.currentUser) return;
+            
+            const currentPoints = state.points[state.currentUser.id] || { reads: 0, reactions: 0, effective: 0 };
+            
+            document.getElementById('diamond-balance').textContent = state.currentUser.diamonds;
+            document.getElementById('points-today').textContent = currentPoints.effective;
+            
+            // Profile section
+            document.getElementById('profile-avatar').textContent = getUserAvatarText(state.currentUser);
+            document.getElementById('profile-name').textContent = getUserDisplayName(state.currentUser);
+            document.getElementById('profile-id').textContent = `ID: ${state.currentUser.id}`;
+            document.getElementById('profile-diamonds').textContent = state.currentUser.diamonds;
+            document.getElementById('profile-posts').textContent = state.posts.filter(p => p.authorId === state.currentUser.id).length;
+            document.getElementById('profile-reads').textContent = currentPoints.reads;
+            document.getElementById('profile-reactions').textContent = currentPoints.reactions;
+            document.getElementById('estimated-reward').textContent = `~${calculateEstimatedReward(state.currentUser.id)} 💎`;
+            
+            // Pool section
+            document.getElementById('current-pool').textContent = state.pool.current + ' 💎';
+            document.getElementById('total-points').textContent = state.pool.totalPoints;
+            document.getElementById('active-users').textContent = state.pool.participants;
+            document.getElementById('your-points').textContent = currentPoints.effective;
+            document.getElementById('your-share').textContent = (calculateUserShare(state.currentUser.id) * 100).toFixed(1) + '%';
         }
 
         function updatePinnedSection() {
@@ -1368,80 +1267,157 @@
             }
         }
 
-        function renderLeaderboard() {
-            const leaderboard = document.getElementById('leaderboard');
-            leaderboard.innerHTML = '';
+        // User helper functions
+        function getUserAvatarText(user) {
+            return user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U';
+        }
 
-            // Create sorted list of users by points
-            const sortedUsers = Object.entries(state.points)
-                .map(([userId, points]) => ({
-                    userId: userId,
-                    points: points.effective,
-                    ...state.users[userId]
-                }))
-                .filter(user => user.firstName) // Only users with data
-                .sort((a, b) => b.points - a.points)
-                .slice(0, 10);
+        function getUserDisplayName(user) {
+            if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+            if (user.firstName) return user.firstName;
+            if (user.username) return `@${user.username}`;
+            return 'Пользователь';
+        }
 
-            if (sortedUsers.length === 0) {
-                leaderboard.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Пока нет активных пользователей</div>';
+        // Navigation
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(sectionName + '-section').classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Post actions
+        function createPost(event) {
+            event.preventDefault();
+            const text = document.getElementById('postText').value.trim();
+            
+            if (!text) {
+                showNotification('Введите текст поста', 'error');
                 return;
             }
 
-            sortedUsers.forEach((user, index) => {
-                const item = document.createElement('div');
-                item.className = 'leaderboard-item';
-                item.innerHTML = `
-                    <div class="leaderboard-rank">${index + 1}</div>
-                    <div class="leaderboard-avatar">${getUserAvatarText(user)}</div>
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-name">
-                            ${getUserDisplayName(user)}
-                            ${user.isPremium ? ' <span style="color: #4ecdc4;">⭐</span>' : ''}
-                            ${user.userId === state.currentUser.id ? ' <span style="color: #4ecdc4;">(Вы)</span>' : ''}
-                        </div>
-                        <div class="leaderboard-points">${user.points} баллов</div>
-                    </div>
-                    <div class="balance-card">${Math.round(calculateEstimatedReward(user.userId))} 💎</div>
-                `;
-                leaderboard.appendChild(item);
+            if (state.currentUser.diamonds < state.prices.post) {
+                showNotification('Недостаточно алмазов!', 'error');
+                openStoreModal();
+                return;
+            }
+
+            // Deduct diamonds and update pool
+            state.currentUser.diamonds -= state.prices.post;
+            updatePool('post');
+            
+            // Create new post
+            const newPost = createPost(state.currentUser.id, text);
+            state.posts.unshift(newPost);
+            
+            // Initialize for all users
+            Object.keys(state.users).forEach(userId => {
+                if (!state.userPosts[userId][newPost.id]) {
+                    state.userPosts[userId][newPost.id] = { isLiked: false };
+                }
             });
+            
+            renderAll();
+            closeCreatePostModal();
+            document.getElementById('postText').value = '';
+            saveState();
+            
+            showNotification('Пост опубликован!', 'success');
         }
 
-        // Update UI elements
-        function updateUI() {
-            if (!state.currentUser) return;
+        function likePost(postId) {
+            const post = state.posts.find(p => p.id === postId);
+            const userPostData = state.userPosts[state.currentUser.id][postId];
             
-            const currentPoints = state.points[state.currentUser.id] || { reads: 0, reactions: 0, effective: 0 };
+            if (post && post.authorId !== state.currentUser.id && !userPostData.isLiked) {
+                post.likes++;
+                userPostData.isLiked = true;
+                
+                // Add points for reaction
+                if (!state.points[state.currentUser.id]) {
+                    state.points[state.currentUser.id] = { reads: 0, reactions: 0, effective: 0 };
+                }
+                state.points[state.currentUser.id].reactions++;
+                state.points[state.currentUser.id].effective += 3;
+                
+                updatePool('post'); // Recalculate pool
+                renderAll();
+                saveState();
+                
+                showNotification('+3 балла за реакцию!', 'success');
+            }
+        }
+
+        function boostPost() {
+            const post = state.posts.find(p => p.id === state.currentPostId);
+            if (post && state.currentUser.diamonds >= state.prices.boost) {
+                state.currentUser.diamonds -= state.prices.boost;
+                post.isBoosted = true;
+                updatePool('boost');
+                
+                renderAll();
+                closeBoostModal();
+                saveState();
+                
+                showNotification('Пост забустен!', 'success');
+            }
+        }
+
+        function pinPost() {
+            const post = state.posts.find(p => p.id === state.currentPostId);
+            if (post && !state.pinnedPost && state.currentUser.diamonds >= state.prices.pin) {
+                state.currentUser.diamonds -= state.prices.pin;
+                state.pinnedPost = post;
+                post.isPinned = true;
+                updatePool('pin');
+                
+                startPinTimer();
+                renderAll();
+                closePinModal();
+                saveState();
+                
+                showNotification('Пост закреплен на 1 минуту!', 'success');
+            }
+        }
+
+        function startPinTimer() {
+            let timeLeft = 60;
             
-            document.getElementById('diamond-balance').textContent = state.currentUser.diamonds;
-            document.getElementById('points-today').textContent = currentPoints.effective;
+            if (state.pinTimer) clearInterval(state.pinTimer);
             
-            // Profile section
-            document.getElementById('profile-avatar').textContent = getUserAvatarText(state.currentUser);
-            document.getElementById('profile-name').textContent = getUserDisplayName(state.currentUser);
-            document.getElementById('profile-id').textContent = `ID: ${state.currentUser.tgId || state.currentUser.id}`;
-            document.getElementById('profile-diamonds').textContent = state.currentUser.diamonds;
-            document.getElementById('profile-posts').textContent = state.posts.filter(p => p.authorId === state.currentUser.id).length;
-            document.getElementById('profile-reads').textContent = currentPoints.reads;
-            document.getElementById('profile-reactions').textContent = currentPoints.reactions;
-            document.getElementById('estimated-reward').textContent = `~${calculateEstimatedReward(state.currentUser.id).toFixed(1)} 💎`;
-            
-            // Pool section
-            document.getElementById('current-pool').textContent = state.pool.current.toLocaleString() + ' 💎';
-            document.getElementById('total-points').textContent = state.pool.totalPoints.toLocaleString();
-            document.getElementById('active-users').textContent = state.pool.participants;
-            document.getElementById('your-points').textContent = currentPoints.effective;
-            document.getElementById('your-share').textContent = (calculateUserShare(state.currentUser.id) * 100).toFixed(2) + '%';
+            state.pinTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('pin-timer').textContent = 
+                    `${Math.floor(timeLeft / 60).toString().padStart(2, '0')}:${(timeLeft % 60).toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(state.pinTimer);
+                    state.pinTimer = null;
+                    state.pinnedPost.isPinned = false;
+                    state.pinnedPost = null;
+                    renderAll();
+                    saveState();
+                    showNotification('Время закрепления истекло', 'info');
+                }
+            }, 1000);
+        }
+
+        function buyDiamonds(amount) {
+            state.currentUser.diamonds += amount;
+            updateUI();
+            closeStoreModal();
+            saveState();
+            showNotification(`Куплено ${amount} алмазов!`, 'success');
         }
 
         // Modal functions
         function openCreatePostModal() {
-            if (state.currentUser.diamonds < state.prices.post) {
-                alert(`Недостаточно алмазов! Минимум ${state.prices.post} 💎 для публикации поста.`);
-                openStoreModal();
-                return;
-            }
             document.getElementById('createPostModal').style.display = 'block';
         }
 
@@ -1450,11 +1426,6 @@
         }
 
         function openBoostModal(postId) {
-            if (state.currentUser.diamonds < state.prices.boost) {
-                alert(`Недостаточно алмазов! Нужно ${state.prices.boost} 💎 для буста.`);
-                openStoreModal();
-                return;
-            }
             state.currentPostId = postId;
             document.getElementById('boostModal').style.display = 'block';
         }
@@ -1464,15 +1435,6 @@
         }
 
         function openPinModal(postId) {
-            if (state.pinnedPost) {
-                alert('Уже есть закрепленный пост! Можно закрепить только один пост одновременно.');
-                return;
-            }
-            if (state.currentUser.diamonds < state.prices.pin) {
-                alert(`Недостаточно алмазов! Нужно ${state.prices.pin} 💎 для закрепа.`);
-                openStoreModal();
-                return;
-            }
             state.currentPostId = postId;
             document.getElementById('pinModal').style.display = 'block';
         }
@@ -1489,240 +1451,90 @@
             document.getElementById('storeModal').style.display = 'none';
         }
 
-        // Post actions
-        function createPost(event) {
-            event.preventDefault();
-            const text = document.getElementById('postText').value.trim();
-            
-            if (!text) {
-                alert('Введите текст поста');
-                return;
-            }
-
-            if (text.length > 500) {
-                alert('Пост не должен превышать 500 символов');
-                return;
-            }
-
-            // Deduct diamonds
-            state.currentUser.diamonds -= state.prices.post;
-            
-            // Add to pool
-            updatePool('post');
-            
-            // Add new post (visible to ALL users)
-            const newPost = {
-                id: Date.now(),
-                authorId: state.currentUser.id,
-                content: text,
-                timestamp: 'только что',
-                views: 0,
-                likes: 0,
-                isBoosted: false,
-                isPinned: false,
-                createdAt: new Date()
-            };
-
-            state.posts.unshift(newPost);
-            
-            // Initialize post data for all users
-            Object.keys(state.users).forEach(userId => {
-                if (!state.userPosts[userId][newPost.id]) {
-                    state.userPosts[userId][newPost.id] = {
-                        isLiked: false
-                    };
-                }
-            });
-            
-            renderFeed();
-            updateUI();
-            closeCreatePostModal();
-            document.getElementById('postText').value = '';
-
-            saveState(); // Save after creating post
-            showPointsNotification(`Пост опубликован! +${state.prices.post} 💎 в пул`);
-        }
-
-        function likePost(postId) {
-            const post = state.posts.find(p => p.id === postId);
-            const userPostData = state.userPosts[state.currentUser.id][postId];
-            
-            if (post && post.authorId !== state.currentUser.id && !userPostData.isLiked) {
-                // Only allow liking once and not your own posts
-                post.likes++;
-                userPostData.isLiked = true;
-                
-                // Add points for reaction (only first time)
-                if (!state.points[state.currentUser.id]) {
-                    state.points[state.currentUser.id] = { reads: 0, reactions: 0, effective: 0 };
-                }
-                state.points[state.currentUser.id].reactions++;
-                state.points[state.currentUser.id].effective += 3; // +3 балла за реакцию
-                
-                updateUI();
-                showPointsNotification('+3 балла за реакцию');
-                renderFeed();
-                saveState(); // Save after liking
-            }
-        }
-
-        function boostPost() {
-            const post = state.posts.find(p => p.id === state.currentPostId);
-            if (post) {
-                state.currentUser.diamonds -= state.prices.boost;
-                post.isBoosted = true;
-                post.timestamp = 'только что (буст)';
-                
-                // Add to pool
-                updatePool('boost');
-                
-                renderFeed();
-                updateUI();
-                closeBoostModal();
-                
-                saveState(); // Save after boost
-                showPointsNotification(`Пост забустен! +${state.prices.boost} 💎 в пул`);
-            }
-        }
-
-        function pinPost() {
-            const post = state.posts.find(p => p.id === state.currentPostId);
-            if (post && !state.pinnedPost) {
-                state.currentUser.diamonds -= state.prices.pin;
-                
-                // Add to pool
-                updatePool('pin');
-                
-                // Set as pinned
-                post.isPinned = true;
-                state.pinnedPost = post;
-                
-                // Start 1-minute timer
-                startPinTimer();
-                
-                updatePinnedSection();
-                renderFeed();
-                updateUI();
-                closePinModal();
-                
-                saveState(); // Save after pin
-                showPointsNotification(`Пост закреплен на 1 минуту! +${state.prices.pin} 💎 в пул`);
-            }
-        }
-
-        function startPinTimer() {
-            let timeLeft = 60; // 1 minute
-            
-            // Clear existing timer
-            if (state.pinTimer) {
-                clearInterval(state.pinTimer);
-            }
-            
-            state.pinTimer = setInterval(() => {
-                timeLeft--;
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                document.getElementById('pin-timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(state.pinTimer);
-                    state.pinTimer = null;
-                    
-                    // Unpin the post
-                    if (state.pinnedPost) {
-                        state.pinnedPost.isPinned = false;
-                        state.pinnedPost = null;
-                    }
-                    
-                    updatePinnedSection();
-                    renderFeed();
-                    saveState(); // Save after unpin
-                    showPointsNotification('Время закрепления истекло');
-                }
-            }, 1000);
-        }
-
-        function buyDiamonds(amount) {
-            state.currentUser.diamonds += amount;
-            updateUI();
-            closeStoreModal();
-            saveState(); // Save after purchase
-            showPointsNotification(`Успешно куплено ${amount} алмазов!`);
-        }
-
-        function startEpochTimer() {
+        // Background services
+        function startBackgroundServices() {
+            // Simulate online users activity
             setInterval(() => {
-                const now = new Date();
-                const timeLeft = state.pool.epochEnds - now;
+                // Randomly change online status of demo users
+                Object.keys(state.users).forEach(userId => {
+                    if (userId !== state.currentUser.id && Math.random() > 0.3) {
+                        state.onlineUsers.add(userId);
+                    } else if (Math.random() > 0.8) {
+                        state.onlineUsers.delete(userId);
+                    }
+                });
                 
-                if (timeLeft <= 0) {
-                    simulateEpochDistribution();
-                    state.pool.epochEnds = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-                    saveState(); // Save after epoch distribution
+                // Update timestamps occasionally
+                if (Math.random() > 0.7) {
+                    state.posts.forEach(post => {
+                        if (!post.isPinned && Math.random() > 0.8) {
+                            post.views += Math.floor(Math.random() * 3);
+                        }
+                    });
+                    renderFeed();
                 }
-            }, 60000);
-        }
-
-        function simulateEpochDistribution() {
-            const totalDistributed = state.pool.current * 0.95;
-            showPointsNotification(`Эпоха завершена! Распределено ${Math.round(totalDistributed)} 💎 между участниками`);
+            }, 10000);
             
-            state.pool.current = state.pool.current * 0.05;
+            // Auto-save every 30 seconds
+            setInterval(() => {
+                saveState();
+            }, 30000);
         }
 
-        function showPointsNotification(message) {
+        // Notification system
+        function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
+            const bgColor = type === 'success' ? '#4cd964' : type === 'error' ? '#ff3b30' : '#667eea';
+            
             notification.style.cssText = `
                 position: fixed;
                 top: 100px;
                 right: 20px;
-                background: linear-gradient(135deg, #4ecdc4, #44a08d);
+                background: ${bgColor};
                 color: white;
-                padding: 12px 16px;
-                border-radius: 10px;
+                padding: 16px 20px;
+                border-radius: 16px;
                 font-weight: 600;
                 z-index: 3000;
                 animation: slideIn 0.3s ease-out;
                 font-size: 14px;
+                max-width: 300px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(20px);
             `;
             notification.textContent = message;
             
             document.body.appendChild(notification);
             
             setTimeout(() => {
-                notification.remove();
+                notification.style.animation = 'slideOut 0.3s ease-in forwards';
+                setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
 
-        // Add CSS for animation
+        // Add CSS animations
         const style = document.createElement('style');
         style.textContent = `
             @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
             }
-            
-            .section {
-                transition: opacity 0.3s ease;
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
             }
         `;
         document.head.appendChild(style);
 
-        // Close user switch when clicking outside
+        // Close modals on outside click
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.user-switch') && !e.target.closest('.nav-tab:last-child')) {
-                document.getElementById('user-switch').style.display = 'none';
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
             }
         });
 
-        // Initialize Telegram app when loaded
-        document.addEventListener('DOMContentLoaded', initTelegramApp);
+        // Initialize app when loaded
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
