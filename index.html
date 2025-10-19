@@ -700,7 +700,7 @@ byId('friend-add').onclick=()=>{
 byId('to-friends').onclick=()=> go('friends-section'); byId('to-store').onclick=()=> go('store-section');
 
 /* 14) Boot (ждём загрузку, потом initUser) */
-(async ()=>{
+(async ()=> {
   await load();
   await initUser();
   renderAll();
