@@ -180,6 +180,9 @@
             margin-bottom: 14px;
             line-height: 1.5;
             font-size: 14px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         .post-stats {
@@ -786,17 +789,17 @@
                         <div class="stat-label">Постов</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="profile-reads">156</div>
+                        <div class="stat-value" id="profile-reads">0</div>
                         <div class="stat-label">Просмотров</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="profile-reactions">42</div>
+                        <div class="stat-value" id="profile-reactions">0</div>
                         <div class="stat-label">Реакций</div>
                     </div>
                 </div>
 
                 <div class="pool-info">
-                    <div class="pool-amount" id="estimated-reward">~5.2 💎</div>
+                    <div class="pool-amount" id="estimated-reward">~0 💎</div>
                     <div class="pool-label">Оценочная награда за сегодня</div>
                 </div>
             </div>
@@ -805,7 +808,7 @@
         <!-- Pool Section -->
         <section class="section" id="pool-section" style="display: none;">
             <div class="pool-info">
-                <div class="pool-amount" id="current-pool">1,250 💎</div>
+                <div class="pool-amount" id="current-pool">0 💎</div>
                 <div class="pool-label">Текущий пул наград</div>
             </div>
 
@@ -813,19 +816,19 @@
                 <h3 style="margin-bottom: 16px; font-size: 16px;">Математика распределения</h3>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value" id="total-points">2,580</div>
+                        <div class="stat-value" id="total-points">0</div>
                         <div class="stat-label">Всего баллов</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="active-users">89</div>
+                        <div class="stat-value" id="active-users">0</div>
                         <div class="stat-label">Активных пользователей</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="your-points">156</div>
+                        <div class="stat-value" id="your-points">0</div>
                         <div class="stat-label">Ваши баллы</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" id="your-share">6.05%</div>
+                        <div class="stat-value" id="your-share">0%</div>
                         <div class="stat-label">Ваша доля</div>
                     </div>
                 </div>
@@ -835,7 +838,7 @@
                     <div style="background: #0f0f0f; padding: 12px; border-radius: 8px; font-size: 12px; color: #888;">
                         Доля = Ваши_баллы / Всего_баллов<br>
                         Награда = Пул × Доля<br>
-                        Ваша награда = 1250 × (156 / 2580) = ~75.6 💎
+                        Баллы НЕ начисляются за просмотры
                     </div>
                 </div>
             </div>
@@ -918,7 +921,7 @@
         // Telegram WebApp initialization
         const tg = window.Telegram.WebApp;
         
-        // State management with shared posts between users
+        // State management with localStorage persistence
         let state = {
             currentUser: null,
             users: {},
@@ -926,9 +929,9 @@
             userPosts: {}, // Отдельные лайки для каждого пользователя
             points: {},
             pool: {
-                current: 1250,
-                totalPoints: 2580,
-                participants: 89,
+                current: 0,
+                totalPoints: 0,
+                participants: 0,
                 epochEnds: new Date(Date.now() + 6 * 60 * 60 * 1000)
             },
             limits: {
@@ -946,6 +949,33 @@
             pinTimer: null
         };
 
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('diamondFeedState', JSON.stringify(state));
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            const saved = localStorage.getItem('diamondFeedState');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                
+                // Restore Date objects
+                if (parsed.pool && parsed.pool.epochEnds) {
+                    parsed.pool.epochEnds = new Date(parsed.pool.epochEnds);
+                }
+                if (parsed.posts) {
+                    parsed.posts.forEach(post => {
+                        post.createdAt = new Date(post.createdAt);
+                    });
+                }
+                
+                state = parsed;
+                return true;
+            }
+            return false;
+        }
+
         // Initialize Telegram WebApp
         function initTelegramApp() {
             tg.expand();
@@ -956,16 +986,19 @@
             tg.setHeaderColor('#1a1a1a');
             tg.setBackgroundColor('#0f0f0f');
             
+            // Try to load saved state first
+            const hasSavedState = loadState();
+            
             // Check if user is authenticated
             if (tg.initDataUnsafe.user) {
-                handleTelegramUser(tg.initDataUnsafe.user);
+                handleTelegramUser(tg.initDataUnsafe.user, !hasSavedState);
             } else {
                 showAuthScreen();
             }
         }
 
         // Handle Telegram user data
-        function handleTelegramUser(tgUser) {
+        function handleTelegramUser(tgUser, loadSampleData = true) {
             const userId = tgUser.id.toString();
             
             // Create or update user in state
@@ -983,7 +1016,7 @@
                     joinedAt: new Date()
                 };
                 
-                // Initialize points for new user
+                // Initialize points for new user (NO POINTS FOR VIEWS)
                 state.points[userId] = { 
                     reads: 0, 
                     reactions: 0, 
@@ -996,13 +1029,14 @@
             
             state.currentUser = state.users[userId];
             
-            // Load sample posts if first time
-            if (state.posts.length === 0) {
+            // Load sample posts only if no saved state and requested
+            if (loadSampleData && state.posts.length === 0) {
                 loadSamplePosts();
             }
             
             showAppContent();
             initApp();
+            saveState(); // Save after initialization
         }
 
         // Load sample posts with Telegram users
@@ -1049,13 +1083,12 @@
             // Add sample users to state
             Object.values(sampleUsers).forEach(user => {
                 state.users[user.id] = user;
+                // NO INITIAL POINTS - users start with 0
                 state.points[user.id] = { 
-                    reads: Math.floor(Math.random() * 200) + 50, 
-                    reactions: Math.floor(Math.random() * 50) + 20, 
+                    reads: 0, 
+                    reactions: 0, 
                     effective: 0 
                 };
-                // Calculate effective points
-                state.points[user.id].effective = state.points[user.id].reads + (state.points[user.id].reactions * 3);
                 
                 // Initialize user posts data
                 state.userPosts[user.id] = {};
@@ -1095,28 +1128,6 @@
                     isBoosted: false,
                     isPinned: false,
                     createdAt: new Date(Date.now() - 20 * 60 * 1000)
-                },
-                {
-                    id: 4,
-                    authorId: '5',
-                    content: 'Как вам новая система наград? Мне кажется, это отличная мотивация для создания качественного контента!',
-                    timestamp: '35 мин назад',
-                    views: 22,
-                    likes: 10,
-                    isBoosted: false,
-                    isPinned: false,
-                    createdAt: new Date(Date.now() - 35 * 60 * 1000)
-                },
-                {
-                    id: 5,
-                    authorId: '6',
-                    content: 'Только что опубликовал свой первый пост. Интересно посмотреть, как работает система баллов на практике.',
-                    timestamp: '50 мин назад',
-                    views: 30,
-                    likes: 15,
-                    isBoosted: false,
-                    isPinned: false,
-                    createdAt: new Date(Date.now() - 50 * 60 * 1000)
                 }
             ];
 
@@ -1190,6 +1201,7 @@
             renderFeed();
             renderLeaderboard();
             toggleUserSwitch();
+            saveState(); // Save after switching user
             showPointsNotification(`Переключен на ${getUserDisplayName(state.currentUser)}`);
         }
 
@@ -1199,6 +1211,11 @@
             renderLeaderboard();
             updateUI();
             startEpochTimer();
+            
+            // Restore pinned post timer if exists
+            if (state.pinnedPost && state.pinTimer === null) {
+                updatePinnedSection();
+            }
         }
 
         // Navigation
@@ -1247,7 +1264,7 @@
             const userPoints = state.points[userId]?.effective || 0;
             if (userPoints < state.limits.minPoints) return 0;
             
-            return userPoints / state.pool.totalPoints;
+            return userPoints / (state.pool.totalPoints || 1);
         }
 
         function calculateEstimatedReward(userId) {
@@ -1295,7 +1312,7 @@
                 if (!author) return;
                 
                 // Skip pinned post as it's shown separately
-                if (post.isPinned) return;
+                if (post.isPinned && state.pinnedPost && post.id === state.pinnedPost.id) return;
                 
                 const postElement = document.createElement('div');
                 postElement.className = 'post-card';
@@ -1365,6 +1382,11 @@
                 .filter(user => user.firstName) // Only users with data
                 .sort((a, b) => b.points - a.points)
                 .slice(0, 10);
+
+            if (sortedUsers.length === 0) {
+                leaderboard.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">Пока нет активных пользователей</div>';
+                return;
+            }
 
             sortedUsers.forEach((user, index) => {
                 const item = document.createElement('div');
@@ -1517,6 +1539,7 @@
             closeCreatePostModal();
             document.getElementById('postText').value = '';
 
+            saveState(); // Save after creating post
             showPointsNotification(`Пост опубликован! +${state.prices.post} 💎 в пул`);
         }
 
@@ -1534,11 +1557,12 @@
                     state.points[state.currentUser.id] = { reads: 0, reactions: 0, effective: 0 };
                 }
                 state.points[state.currentUser.id].reactions++;
-                state.points[state.currentUser.id].effective += 3;
+                state.points[state.currentUser.id].effective += 3; // +3 балла за реакцию
                 
                 updateUI();
                 showPointsNotification('+3 балла за реакцию');
                 renderFeed();
+                saveState(); // Save after liking
             }
         }
 
@@ -1556,6 +1580,7 @@
                 updateUI();
                 closeBoostModal();
                 
+                saveState(); // Save after boost
                 showPointsNotification(`Пост забустен! +${state.prices.boost} 💎 в пул`);
             }
         }
@@ -1580,6 +1605,7 @@
                 updateUI();
                 closePinModal();
                 
+                saveState(); // Save after pin
                 showPointsNotification(`Пост закреплен на 1 минуту! +${state.prices.pin} 💎 в пул`);
             }
         }
@@ -1610,6 +1636,7 @@
                     
                     updatePinnedSection();
                     renderFeed();
+                    saveState(); // Save after unpin
                     showPointsNotification('Время закрепления истекло');
                 }
             }, 1000);
@@ -1619,6 +1646,7 @@
             state.currentUser.diamonds += amount;
             updateUI();
             closeStoreModal();
+            saveState(); // Save after purchase
             showPointsNotification(`Успешно куплено ${amount} алмазов!`);
         }
 
@@ -1630,6 +1658,7 @@
                 if (timeLeft <= 0) {
                     simulateEpochDistribution();
                     state.pool.epochEnds = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                    saveState(); // Save after epoch distribution
                 }
             }, 60000);
         }
