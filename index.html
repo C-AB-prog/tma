@@ -63,6 +63,35 @@
             font-weight: 600;
         }
 
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 4px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 12px;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
         /* Pinned Post */
         .pinned-section {
             margin: 16px 0;
@@ -224,6 +253,8 @@
             border-radius: 20px;
             width: 90%;
             max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-header {
@@ -376,30 +407,72 @@
             color: #888;
         }
 
-        /* Navigation */
-        .nav-tabs {
-            display: flex;
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 4px;
+        /* Leaderboard */
+        .leaderboard-list {
             margin: 16px 0;
         }
 
-        .nav-tab {
-            flex: 1;
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             padding: 12px;
-            text-align: center;
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 14px;
-            cursor: pointer;
+            background: #1a1a1a;
             border-radius: 12px;
+            margin-bottom: 8px;
         }
 
-        .nav-tab.active {
+        .leaderboard-rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             background: #667eea;
-            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .leaderboard-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .leaderboard-info {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .leaderboard-points {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Pool Info */
+        .pool-info {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            padding: 16px;
+            border-radius: 16px;
+            margin: 16px 0;
+            text-align: center;
+        }
+
+        .pool-amount {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .pool-label {
+            font-size: 14px;
+            opacity: 0.9;
         }
 
         /* Loading */
@@ -416,6 +489,43 @@
             border-radius: 8px;
             font-size: 12px;
             margin-left: 8px;
+        }
+
+        .user-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 150px;
+            z-index: 1000;
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .user-option {
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            color: white;
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .user-option:hover {
+            background: #333;
         }
     </style>
 </head>
@@ -435,6 +545,15 @@
                 </div>
             </div>
         </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('feed')">📱 Лента</button>
+            <button class="nav-tab" onclick="showSection('leaderboard')">🏆 Топ</button>
+            <button class="nav-tab" onclick="showSection('profile')">👤 Профиль</button>
+            <button class="nav-tab" onclick="showSection('pool')">💰 Пул</button>
+            <button class="nav-tab" onclick="openStoreModal()">🛒 Магазин</button>
+        </nav>
 
         <!-- Pinned Post -->
         <section class="pinned-section" id="pinned-section" style="display: none;">
@@ -456,15 +575,108 @@
             </div>
         </section>
 
-        <!-- Feed -->
-        <section class="feed" id="feed">
-            <!-- Posts will be loaded here -->
+        <!-- Feed Section -->
+        <section class="section" id="feed-section">
+            <div class="feed" id="feed">
+                <!-- Posts will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Leaderboard Section -->
+        <section class="section" id="leaderboard-section" style="display: none;">
+            <div class="leaderboard-list" id="leaderboard">
+                <!-- Leaderboard will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section class="section" id="profile-section" style="display: none;">
+            <div class="profile-section">
+                <div class="profile-header">
+                    <div class="profile-avatar"></div>
+                    <div>
+                        <div class="profile-name" id="profile-name">Пользователь</div>
+                        <div class="user-menu">
+                            <button class="user-option" onclick="toggleUserDropdown()">👥 Сменить пользователя ▼</button>
+                            <div class="user-dropdown" id="user-dropdown">
+                                <button class="user-option" onclick="switchUser(1)">👤 Текущий пользователь</button>
+                                <button class="user-option" onclick="switchUser(2)">👤 Алексей</button>
+                                <button class="user-option" onclick="switchUser(3)">👤 Мария</button>
+                                <button class="user-option" onclick="switchUser(4)">👤 Дмитрий</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="profile-diamonds">100</div>
+                        <div class="stat-label">Алмазов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="profile-posts">3</div>
+                        <div class="stat-label">Постов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="profile-reads">156</div>
+                        <div class="stat-label">Просмотров</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="profile-reactions">42</div>
+                        <div class="stat-label">Реакций</div>
+                    </div>
+                </div>
+
+                <div class="pool-info">
+                    <div class="pool-amount" id="estimated-reward">~5.2 💎</div>
+                    <div class="pool-label">Оценочная награда за сегодня</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pool Section -->
+        <section class="section" id="pool-section" style="display: none;">
+            <div class="pool-info">
+                <div class="pool-amount" id="current-pool">1,250 💎</div>
+                <div class="pool-label">Текущий пул наград</div>
+            </div>
+
+            <div class="profile-section">
+                <h3>Математика распределения</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-points">2,580</div>
+                        <div class="stat-label">Всего баллов</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-users">89</div>
+                        <div class="stat-label">Активных пользователей</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="your-points">156</div>
+                        <div class="stat-label">Ваши баллы</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="your-share">6.05%</div>
+                        <div class="stat-label">Ваша доля</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Формула распределения:</label>
+                    <div style="background: #0f0f0f; padding: 12px; border-radius: 8px; font-size: 12px; color: #888;">
+                        Доля = Ваши_баллы / Всего_баллов<br>
+                        Награда = Пул × Доля<br>
+                        Ваша награда = 1250 × (156 / 2580) = ~75.6 💎
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Create Post Button -->
         <button class="create-post" onclick="openCreatePostModal()">+</button>
 
-        <!-- Create Post Modal -->
+        <!-- Modals -->
         <div class="modal" id="createPostModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -482,7 +694,6 @@
             </div>
         </div>
 
-        <!-- Boost Modal -->
         <div class="modal" id="boostModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -495,7 +706,6 @@
             </div>
         </div>
 
-        <!-- Pin Modal -->
         <div class="modal" id="pinModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -508,7 +718,6 @@
             </div>
         </div>
 
-        <!-- Store Modal -->
         <div class="modal" id="storeModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -543,78 +752,185 @@
         tg.expand();
         tg.enableClosingConfirmation();
 
-        // State management
+        // State management with enhanced logic
         let state = {
-            diamonds: 100,
-            points: 0,
-            posts: [],
-            currentUser: {
-                id: 1,
-                name: 'Пользователь',
-                avatar: ''
+            currentUserId: 1,
+            users: {
+                1: { id: 1, name: 'Текущий пользователь', diamonds: 100, trust: 1.0 },
+                2: { id: 2, name: 'Алексей', diamonds: 250, trust: 1.0 },
+                3: { id: 3, name: 'Мария', diamonds: 75, trust: 1.0 },
+                4: { id: 4, name: 'Дмитрий', diamonds: 500, trust: 1.0 }
             },
-            currentPostId: null
+            posts: [],
+            points: {
+                1: { reads: 156, reactions: 42, effective: 198 },
+                2: { reads: 89, reactions: 31, effective: 120 },
+                3: { reads: 234, reactions: 67, effective: 301 },
+                4: { reads: 45, reactions: 12, effective: 57 }
+            },
+            pool: {
+                current: 1250,
+                totalPoints: 2580,
+                participants: 89,
+                epochEnds: new Date(Date.now() + 6 * 60 * 60 * 1000) // 6 hours from now
+            },
+            limits: {
+                maxReads: 200,
+                maxReactions: 100,
+                maxSameAuthor: 20,
+                minPoints: 5
+            },
+            prices: {
+                post: 10,
+                boost: 10,
+                pin: 100
+            }
         };
 
         // Sample posts data
         const samplePosts = [
             {
                 id: 1,
-                author: { id: 2, name: 'Алексей', avatar: '' },
+                authorId: 2,
                 content: 'Привет всем! Это демо-версия ленты с алмазами. Здесь можно публиковать посты, бустить их и зарабатывать баллы за активность.',
                 timestamp: '5 мин назад',
                 views: 15,
                 likes: 8,
                 isLiked: false,
-                isAuthor: false,
-                isBoosted: false
+                isBoosted: false,
+                isPinned: false,
+                createdAt: new Date(Date.now() - 5 * 60 * 1000)
             },
             {
                 id: 2,
-                author: { id: 3, name: 'Мария', avatar: '' },
+                authorId: 3,
                 content: 'Отличная идея с системой баллов и распределением пула! Жду, когда можно будет протестировать полную версию.',
                 timestamp: '12 мин назад',
                 views: 23,
                 likes: 12,
                 isLiked: true,
-                isAuthor: false,
-                isBoosted: true
+                isBoosted: true,
+                isPinned: false,
+                createdAt: new Date(Date.now() - 12 * 60 * 1000)
             },
             {
                 id: 3,
-                author: { id: 1, name: 'Пользователь', avatar: '' },
+                authorId: 1,
                 content: 'Это мой собственный пост. Как автор, я вижу кнопки для буста и закрепа.',
                 timestamp: '20 мин назад',
                 views: 8,
                 likes: 3,
                 isLiked: false,
-                isAuthor: true,
-                isBoosted: false
+                isBoosted: false,
+                isPinned: false,
+                createdAt: new Date(Date.now() - 20 * 60 * 1000)
             }
         ];
 
         // Initialize the app
         function initApp() {
-            state.posts = samplePosts;
+            state.posts = [...samplePosts].sort((a, b) => {
+                // Sort: pinned > boosted > recent
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                if (a.isBoosted && !b.isBoosted) return -1;
+                if (!a.isBoosted && b.isBoosted) return 1;
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            
             renderFeed();
+            renderLeaderboard();
             updateUI();
             startPinTimer();
+            startEpochTimer();
         }
 
-        // Render feed posts
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section and activate tab
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        // User management
+        function switchUser(userId) {
+            state.currentUserId = userId;
+            updateUI();
+            renderFeed();
+            renderLeaderboard();
+            closeUserDropdown();
+            showPointsNotification(`Переключен на ${state.users[userId].name}`);
+        }
+
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function closeUserDropdown() {
+            document.getElementById('user-dropdown').classList.remove('show');
+        }
+
+        // Mathematical functions
+        function calculateUserShare(userId) {
+            const userPoints = state.points[userId]?.effective || 0;
+            if (userPoints < state.limits.minPoints) return 0;
+            
+            return userPoints / state.pool.totalPoints;
+        }
+
+        function calculateEstimatedReward(userId) {
+            const share = calculateUserShare(userId);
+            return state.pool.current * share;
+        }
+
+        function calculatePoolContribution(action) {
+            // In real app, this would track actual contributions
+            const contributions = {
+                post: state.prices.post,
+                boost: state.prices.boost,
+                pin: state.prices.pin
+            };
+            return contributions[action] || 0;
+        }
+
+        function updatePool(action) {
+            const contribution = calculatePoolContribution(action);
+            state.pool.current += contribution;
+            state.pool.totalPoints = Object.values(state.points).reduce((sum, p) => sum + p.effective, 0);
+            state.pool.participants = Object.keys(state.points).filter(id => 
+                state.points[id].effective >= state.limits.minPoints
+            ).length;
+        }
+
+        // Render functions
         function renderFeed() {
             const feed = document.getElementById('feed');
             feed.innerHTML = '';
 
             state.posts.forEach(post => {
+                const author = state.users[post.authorId];
+                const isAuthor = post.authorId === state.currentUserId;
+                
                 const postElement = document.createElement('div');
                 postElement.className = 'post-card';
                 postElement.innerHTML = `
                     <div class="post-header">
                         <div class="author-info">
                             <div class="author-avatar"></div>
-                            <div class="author-name">${post.author.name}</div>
+                            <div class="author-name">${author.name}</div>
                             ${post.isBoosted ? '<span class="points-earned">🚀 Буст</span>' : ''}
+                            ${post.isPinned ? '<span class="points-earned">📌 Закреп</span>' : ''}
                         </div>
                         <div class="post-time">${post.timestamp}</div>
                     </div>
@@ -628,7 +944,7 @@
                                 onclick="likePost(${post.id})">
                             ${post.isLiked ? '❤️' : '🤍'} Лайк
                         </button>
-                        ${post.isAuthor ? `
+                        ${isAuthor ? `
                             <button class="action-btn boost-btn" onclick="openBoostModal(${post.id})">
                                 🚀 Буст
                             </button>
@@ -642,16 +958,64 @@
             });
         }
 
+        function renderLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = '';
+
+            // Create sorted list of users by points
+            const sortedUsers = Object.entries(state.points)
+                .map(([userId, points]) => ({
+                    userId: parseInt(userId),
+                    points: points.effective,
+                    ...state.users[userId]
+                }))
+                .sort((a, b) => b.points - a.points)
+                .slice(0, 10);
+
+            sortedUsers.forEach((user, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                item.innerHTML = `
+                    <div class="leaderboard-rank">${index + 1}</div>
+                    <div class="leaderboard-avatar"></div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">${user.name}</div>
+                        <div class="leaderboard-points">${user.points} баллов</div>
+                    </div>
+                    <div class="balance-card">${Math.round(calculateEstimatedReward(user.userId))} 💎</div>
+                `;
+                leaderboard.appendChild(item);
+            });
+        }
+
         // Update UI elements
         function updateUI() {
-            document.getElementById('diamond-balance').textContent = state.diamonds;
-            document.getElementById('points-today').textContent = state.points;
+            const currentUser = state.users[state.currentUserId];
+            const currentPoints = state.points[state.currentUserId] || { reads: 0, reactions: 0, effective: 0 };
+            
+            document.getElementById('diamond-balance').textContent = currentUser.diamonds;
+            document.getElementById('points-today').textContent = currentPoints.effective;
+            
+            // Profile section
+            document.getElementById('profile-name').textContent = currentUser.name;
+            document.getElementById('profile-diamonds').textContent = currentUser.diamonds;
+            document.getElementById('profile-posts').textContent = state.posts.filter(p => p.authorId === state.currentUserId).length;
+            document.getElementById('profile-reads').textContent = currentPoints.reads;
+            document.getElementById('profile-reactions').textContent = currentPoints.reactions;
+            document.getElementById('estimated-reward').textContent = `~${calculateEstimatedReward(state.currentUserId).toFixed(1)} 💎`;
+            
+            // Pool section
+            document.getElementById('current-pool').textContent = state.pool.current.toLocaleString() + ' 💎';
+            document.getElementById('total-points').textContent = state.pool.totalPoints.toLocaleString();
+            document.getElementById('active-users').textContent = state.pool.participants;
+            document.getElementById('your-points').textContent = currentPoints.effective;
+            document.getElementById('your-share').textContent = (calculateUserShare(state.currentUserId) * 100).toFixed(2) + '%';
         }
 
         // Modal functions
         function openCreatePostModal() {
-            if (state.diamonds < 10) {
-                alert('Недостаточно алмазов! Минимум 10 💎 для публикации поста.');
+            if (state.users[state.currentUserId].diamonds < state.prices.post) {
+                alert(`Недостаточно алмазов! Минимум ${state.prices.post} 💎 для публикации поста.`);
                 openStoreModal();
                 return;
             }
@@ -663,8 +1027,8 @@
         }
 
         function openBoostModal(postId) {
-            if (state.diamonds < 10) {
-                alert('Недостаточно алмазов! Нужно 10 💎 для буста.');
+            if (state.users[state.currentUserId].diamonds < state.prices.boost) {
+                alert(`Недостаточно алмазов! Нужно ${state.prices.boost} 💎 для буста.`);
                 openStoreModal();
                 return;
             }
@@ -677,8 +1041,8 @@
         }
 
         function openPinModal(postId) {
-            if (state.diamonds < 100) {
-                alert('Недостаточно алмазов! Нужно 100 💎 для закрепа на 1 минуту.');
+            if (state.users[state.currentUserId].diamonds < state.prices.pin) {
+                alert(`Недостаточно алмазов! Нужно ${state.prices.pin} 💎 для закрепа на 1 минуту.`);
                 openStoreModal();
                 return;
             }
@@ -714,19 +1078,24 @@
             }
 
             // Deduct diamonds
-            state.diamonds -= 10;
+            state.users[state.currentUserId].diamonds -= state.prices.post;
+            
+            // Add to pool
+            updatePool('post');
             
             // Add new post
             const newPost = {
                 id: Date.now(),
-                author: state.currentUser,
+                authorId: state.currentUserId,
                 content: text,
                 timestamp: 'только что',
                 views: 0,
                 likes: 0,
                 isLiked: false,
                 isAuthor: true,
-                isBoosted: false
+                isBoosted: false,
+                isPinned: false,
+                createdAt: new Date()
             };
 
             state.posts.unshift(newPost);
@@ -735,17 +1104,20 @@
             closeCreatePostModal();
             document.getElementById('postText').value = '';
 
-            // Simulate points accrual
+            // Simulate points accrual for other users viewing this post
             setTimeout(() => {
-                state.points += 1;
-                updateUI();
-                showPointsNotification(1, 'за просмотр поста');
-            }, 2000);
+                // Add points for the author (for creating content)
+                if (!state.points[state.currentUserId]) {
+                    state.points[state.currentUserId] = { reads: 0, reactions: 0, effective: 0 };
+                }
+                
+                showPointsNotification(`Пост опубликован! +${state.prices.post} 💎 в пул`);
+            }, 1000);
         }
 
         function likePost(postId) {
             const post = state.posts.find(p => p.id === postId);
-            if (post) {
+            if (post && post.authorId !== state.currentUserId) {
                 if (post.isLiked) {
                     post.likes--;
                     post.isLiked = false;
@@ -754,7 +1126,13 @@
                     post.isLiked = true;
                     
                     // Add points for reaction
-                    state.points += 3;
+                    if (!state.points[state.currentUserId]) {
+                        state.points[state.currentUserId] = { reads: 0, reactions: 0, effective: 0 };
+                    }
+                    state.points[state.currentUserId].reactions++;
+                    state.points[state.currentUserId].effective += 3;
+                    
+                    updatePool('boost'); // Reaction affects pool indirectly
                     updateUI();
                     showPointsNotification(3, 'за реакцию');
                 }
@@ -765,9 +1143,12 @@
         function boostPost() {
             const post = state.posts.find(p => p.id === state.currentPostId);
             if (post) {
-                state.diamonds -= 10;
+                state.users[state.currentUserId].diamonds -= state.prices.boost;
                 post.isBoosted = true;
                 post.timestamp = 'только что (буст)';
+                
+                // Add to pool
+                updatePool('boost');
                 
                 // Move to top
                 state.posts = state.posts.filter(p => p.id !== state.currentPostId);
@@ -776,11 +1157,16 @@
                 renderFeed();
                 updateUI();
                 closeBoostModal();
+                
+                showPointsNotification(`Пост забустен! +${state.prices.boost} 💎 в пул`);
             }
         }
 
         function pinPost() {
-            state.diamonds -= 100;
+            state.users[state.currentUserId].diamonds -= state.prices.pin;
+            
+            // Add to pool
+            updatePool('pin');
             
             // Show pinned section
             const pinnedSection = document.getElementById('pinned-section');
@@ -791,14 +1177,15 @@
             
             updateUI();
             closePinModal();
+            
+            showPointsNotification(`Пост закреплен! +${state.prices.pin} 💎 в пул`);
         }
 
         function buyDiamonds(amount) {
-            // In real app, this would integrate with TON or Telegram Stars
-            state.diamonds += amount;
+            state.users[state.currentUserId].diamonds += amount;
             updateUI();
             closeStoreModal();
-            alert(`Успешно куплено ${amount} алмазов!`);
+            showPointsNotification(`Успешно куплено ${amount} алмазов!`);
         }
 
         // Utility functions
@@ -819,7 +1206,30 @@
             }, 1000);
         }
 
-        function showPointsNotification(points, reason) {
+        function startEpochTimer() {
+            // Update epoch countdown every minute
+            setInterval(() => {
+                const now = new Date();
+                const timeLeft = state.pool.epochEnds - now;
+                
+                if (timeLeft <= 0) {
+                    // Epoch ended - simulate distribution
+                    simulateEpochDistribution();
+                    state.pool.epochEnds = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                }
+            }, 60000);
+        }
+
+        function simulateEpochDistribution() {
+            // Simulate epoch distribution
+            const totalDistributed = state.pool.current * 0.95; // 5% dust carried over
+            showPointsNotification(`Эпоха завершена! Распределено ${Math.round(totalDistributed)} 💎 между участниками`);
+            
+            // Reset pool for new epoch
+            state.pool.current = state.pool.current * 0.05; // Carry over 5% dust
+        }
+
+        function showPointsNotification(message, reason = '') {
             // Create notification element
             const notification = document.createElement('div');
             notification.style.cssText = `
@@ -834,7 +1244,7 @@
                 z-index: 3000;
                 animation: slideIn 0.3s ease-out;
             `;
-            notification.textContent = `+${points} балл ${reason}`;
+            notification.textContent = reason ? `+${message} балл ${reason}` : message;
             
             document.body.appendChild(notification);
             
@@ -856,22 +1266,22 @@
                     opacity: 1;
                 }
             }
+            
+            .section {
+                transition: opacity 0.3s ease;
+            }
         `;
         document.head.appendChild(style);
 
-        // Initialize app when loaded
-        document.addEventListener('DOMContentLoaded', initApp);
-
-        // Handle visibility change for points accrual
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                // Simulate points for being active
-                setTimeout(() => {
-                    state.points += 1;
-                    updateUI();
-                }, 1000);
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu')) {
+                closeUserDropdown();
             }
         });
+
+        // Initialize app when loaded
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
