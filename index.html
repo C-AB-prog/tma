@@ -21,7 +21,7 @@ body{margin:0;background:
 .brand{display:flex;gap:10px;align-items:center}
 .logo{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:conic-gradient(from 180deg at 50% 50%, var(--brand) 0deg, var(--brand-2) 150deg, var(--brand) 360deg);box-shadow:0 14px 32px rgba(125,169,255,.45)}
 .logo i{color:#fff}.title{font-weight:900}
-.head-kpis{display:flex;gap:8px}
+.head-kpis{display:flex;gap:8px;align-items:center}
 .pill{display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));font-size:12px;font-weight:900}
 .meta-line{padding:0 14px 10px;color:var(--muted);font-size:12px}
 .meta-line .chip{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05)}
@@ -45,7 +45,7 @@ body{margin:0;background:
 .badge.rocket{color:var(--ok);border-color:rgba(68,214,163,.4);background:linear-gradient(180deg, rgba(68,214,163,.18), rgba(255,255,255,.02))}
 .empty{padding:44px 18px;text-align:center;color:var(--muted)}
 
-/* PIN */
+/* PIN красивый */
 .pinned{margin:12px 0;border-radius:18px;display:none}
 .pinned .card{background:linear-gradient(180deg, rgba(125,169,255,.12), rgba(125,169,255,.03)),linear-gradient(180deg,#151b2e,#141a2a);border:1px solid rgba(125,169,255,.25);box-shadow:0 18px 50px rgba(125,169,255,.18);position:relative;overflow:hidden}
 .pinned .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--brand),var(--brand-2));opacity:.8}
@@ -92,8 +92,8 @@ body{margin:0;background:
 </head>
 <body>
 
+<!-- Gate: только внутри Telegram -->
 <script>
-/* gate: только внутри Telegram */
 (function(){
   const tg=window.Telegram?.WebApp; let BOT='t11stMini_bot'; if(BOT.startsWith('@')) BOT=BOT.slice(1);
   if(!tg || !tg.initDataUnsafe?.user){
@@ -124,6 +124,10 @@ body{margin:0;background:
       <div class="pill"><i class="fa-solid fa-gem"></i><span id="bal">0</span></div>
       <div class="pill"><i class="fa-solid fa-star"></i><span id="pts">0</span></div>
       <div class="pill"><i class="fa-solid fa-coins"></i><span id="pool-pill">0</span></div>
+      <!-- Кнопка сброса видна только админу -->
+      <button class="pill" id="admin-reset" title="Глобальный сброс" style="display:none">
+        <i class="fa-solid fa-broom"></i>
+      </button>
     </div>
   </div>
   <div class="meta-line container"><span class="chip"><i class="fa-regular fa-clock"></i> до 24:00 UTC: <b id="eta">--:--:--</b></span></div>
@@ -278,16 +282,18 @@ body{margin:0;background:
 <script>
 if(!window.__STOP_APP__){
 
-/* ===== THEME ===== */
+/* ===== ТЕМА ===== */
 (function(){try{const tp=Telegram?.WebApp?.themeParams||{};const set=(k,v)=>v&&document.documentElement.style.setProperty(k,v);
 if(tp.text_color)set('--text',tp.text_color); if(tp.bg_color)set('--bg',tp.bg_color);
 if(tp.secondary_bg_color){set('--surface',tp.secondary_bg_color);set('--card',tp.secondary_bg_color);}
 if(tp.button_color)set('--brand',tp.button_color); if(tp.hint_color)set('--muted',tp.hint_color);}catch(e){} })();
 
-/* ===== CONST & UTILS ===== */
+/* ===== КОНСТАНТЫ/ЮТИЛЫ ===== */
+const ADMIN_ID='955974106';             // ваш Telegram ID (админ)
+const CLEAR_ALL_AT_SETTLE=false;        // поставить true => каждый день в 00:00 UTC будет тотальный сброс
 const BOOST_WINDOW=5*60*1000;
 const ABLY_CHANNEL='tma';
-const INSTANCE = (()=>{let v=localStorage.getItem('df-instance');if(!v){v=(Date.now().toString(36)+Math.random().toString(36).slice(2,8));localStorage.setItem('df-instance',v);}return v;})();
+const INSTANCE=(()=>{let v=localStorage.getItem('df-instance');if(!v){v=(Date.now().toString(36)+Math.random().toString(36).slice(2,8));localStorage.setItem('df-instance',v);}return v;})();
 const epochEnd=()=> new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()+1,0,0,0));
 const epochIdUTC=(d)=>`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
 const fmt=(ms)=>{if(!Number.isFinite(ms)||ms<0)ms=0;const s=(ms/1000)|0;return `${String((s/3600)|0).padStart(2,'0')}:${String(((s%3600)/60)|0).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`};
@@ -297,25 +303,46 @@ const toTime=(d)=>{ if(!d) return 0; if(d instanceof Date && Number.isFinite(d.g
 function toast(m,kind='ok'){const t=document.createElement('div');t.className=`t ${kind==='err'?'err':kind==='info'?'info':'ok'}`;t.textContent=m;byId('toast').appendChild(t);setTimeout(()=>t.remove(),2600);}
 function show(el){el.style.display='flex'} function hide(el){el.style.display='none'}
 function go(id){document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));}
-const avatarHTML=(u)=>{ const ph=u.photo||u.photo_url; return ph ? `<div class="avatar"><img src="${ph}" referrerpolicy="no-referrer" alt=""></div>` : `<div class="avatar">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`; }
+const avatarHTML=(u)=>{const ph=u.photo||u.photo_url;return ph?`<div class="avatar"><img src="${ph}" referrerpolicy="no-referrer" alt=""></div>`:`<div class="avatar">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`}
 
-/* ===== CLOUD STORAGE ===== */
+/* ===== CloudStorage ===== */
 const CS=Telegram?.WebApp?.CloudStorage;
 const cloud={avail:!!CS,get:(k)=>new Promise(res=>CS?.getItem(k,(e,v)=>res(e?null:v))),set:(k,v)=>new Promise((res,rej)=>CS?.setItem(k,v,(e)=>e?rej(e):res())),mget:(keys)=>new Promise(res=>CS?.getItems(keys,(e,items)=>res(e?{}:items||{})))};
 
-/* ===== REALTIME ===== */
+/* ===== Realtime ===== */
 const RT=(()=>{const listeners=new Set();const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY';
-let ab=null,ch=null;const ready=(async()=>{try{ab=new Ably.Realtime.Promise(KEY);ch=ab.channels.get(ABLY_CHANNEL);
-try{const page=await ch.history({limit:300});(page?.items||[]).forEach(m=>{const d=m.data&&m.data.type?m.data:{type:m.name,payload:m.data,ts:Date.parse(m.timestamp)||Date.now()};listeners.forEach(fn=>fn(d,true));});}catch(e){}
-ch.subscribe(msg=>{const d=msg.data&&msg.data.type?msg.data:{type:msg.name,payload:msg.data,ts:Date.now()};listeners.forEach(fn=>fn(d,false));});}catch(e){toast('Ably не подключился','err');}})();
-return{ready,send:(type,payload)=>{try{ch&&ch.publish(type,{type,payload,ts:Date.now(),origin:INSTANCE});}catch(e){}},on:(fn)=>listeners.add(fn)};})();
+let ab=null,ch=null;
+const ready=(async()=>{try{ab=new Ably.Realtime.Promise(KEY);ch=ab.channels.get(ABLY_CHANNEL);
+try{
+  const page=await ch.history({limit:300});
+  const items=page?.items||[];
+  for(let i=items.length-1;i>=0;i--){
+    const m=items[i];
+    const data=m.data&&m.data.type?m.data:{type:m.name,payload:m.data,ts:Date.parse(m.timestamp)||Date.now(),origin:null};
+    // игнорируем историю до момента последнего сброса
+    if(state.app?.resetAt && Date.parse(m.timestamp) < state.app.resetAt) continue;
+    listeners.forEach(fn=>fn(data,true));
+  }
+}catch(_){}
+ch.subscribe(msg=>{const d=msg.data&&msg.data.type?msg.data:{type:msg.name,payload:msg.data,ts:Date.now()};listeners.forEach(fn=>fn(d,false));});
+}catch(e){toast('Ably не подключился','err');}})();
+return {ready,send:(type,payload)=>{try{ch&&ch.publish(type,{type,payload,ts:Date.now(),origin:INSTANCE});}catch(e){}},on:(fn)=>listeners.add(fn)};
+})();
 
 /* ===== STATE ===== */
-let state={users:{},current:null,posts:[],pool:{amt:0,epochEnds:epochEnd(),settledId:null},pin:{active:null},social:{following:{},followers:{}},presence:{},viewsByUser:{},likesByUser:{},epochPoints:{}};
+let state={
+  users:{}, current:null, posts:[],
+  pool:{amt:0,epochEnds:epochEnd(),settledId:null},
+  pin:{active:null}, social:{following:{},followers:{}},
+  presence:{}, viewsByUser:{}, likesByUser:{}, epochPoints:{},
+  app:{resetAt:0} // метка последнего глобального сброса
+};
 const LS='diamond-feed';
 function revive(o){if(!o||typeof o!=='object')return o;if(o.__d)return new Date(o.__d);if(Array.isArray(o)){for(let i=0;i<o.length;i++)o[i]=revive(o[i]);return o;}for(const k in o)o[k]=revive(o[k]);return o;}
 function saveLS(){try{localStorage.setItem(LS,JSON.stringify(state,(k,v)=>v instanceof Date?{__d:v.toISOString()}:v));}catch(_){}} 
-function loadLS(){try{const raw=localStorage.getItem(LS);if(!raw)return false;const d=revive(JSON.parse(raw));d.users||={};d.posts||=[];d.pool||={};d.pin||={};d.social||={following:{},followers:{}};d.viewsByUser||={};d.likesByUser||={};d.epochPoints||={};if(!(d.pool.epochEnds instanceof Date))d.pool.epochEnds=epochEnd();state=d;return true;}catch(_){return false;}}
+function loadLS(){try{const raw=localStorage.getItem(LS);if(!raw)return false;const d=revive(JSON.parse(raw));
+d.users||={};d.posts||=[];d.pool||={};d.pin||={};d.social||={following:{},followers:{}};d.viewsByUser||={};d.likesByUser||={};d.epochPoints||={};d.app||(d.app={resetAt:0});
+if(!(d.pool.epochEnds instanceof Date))d.pool.epochEnds=epochEnd();state=d;return true;}catch(_){return false;}}
 async function load(){loadLS();if(cloud.avail){try{const got=await cloud.mget(['df:pool','df:pin']);if(got['df:pool']){const p=JSON.parse(got['df:pool']);state.pool.amt=+p.amt||0;state.pool.epochEnds=new Date(p.epochEnds||epochEnd());state.pool.settledId=p.settledId||null;}if(got['df:pin']){const d=JSON.parse(got['df:pin']);state.pin.active=d?.active?{postId:d.active.postId,endsAt:new Date(d.active.endsAt)}:null;}}catch(_){}}}
 function save(){saveLS();if(!cloud.avail)return;try{const uid=state.current;if(uid&&state.users[uid])cloud.set(`df:user:${uid}`,JSON.stringify(state.users[uid]));cloud.set(`df:pool`,JSON.stringify({amt:state.pool.amt||0,epochEnds:state.pool.epochEnds.toISOString(),settledId:state.pool.settledId||null}));cloud.set(`df:pin`,JSON.stringify(serPin()));}catch(_){}}
 function persistUserEngagement(){if(!cloud.avail)return;const uid=state.current;if(!uid)return;try{const liked=Object.keys(state.likesByUser[uid]||{}).slice(-500);cloud.set(`df:liked:${uid}`,JSON.stringify(liked));const eid=epochIdUTC(new Date());const viewed=Object.keys(state.viewsByUser[uid]||{}).slice(-1000);cloud.set(`df:viewed:${uid}:${eid}`,JSON.stringify(viewed));}catch(_){}} 
@@ -325,7 +352,9 @@ async function initUser(){const u=Telegram?.WebApp?.initDataUnsafe?.user;const i
 state.users[id] ||= {id,firstName:u.first_name||'User',lastName:u.last_name||'',username:u.username||('user'+id),diamonds:300,isPremium:!!u.is_premium,points:0,updatedAt:Date.now(),photo:u.photo_url||null};
 state.users[id].photo = u.photo_url || state.users[id].photo || null;
 if(cloud.avail){try{const raw=await cloud.get(`df:user:${id}`);if(raw){const cs=JSON.parse(raw);const cur=state.users[id];state.users[id]={...cur,...cs,diamonds:Math.max(+cur.diamonds||0,+cs.diamonds||0),points:Math.max(+cur.points||0,+cs.points||0)};}}catch(_){}} 
-state.current=id;state.social.following[id] ||= [];state.social.followers[id] ||= [];state.viewsByUser[id] ||= {};state.likesByUser[id] ||= {};state.epochPoints[id] ||= 0;}
+state.current=id;state.social.following[id] ||= [];state.social.followers[id] ||= [];state.viewsByUser[id] ||= {};state.likesByUser[id] ||= {};state.epochPoints[id] ||= 0;
+const btn=byId('admin-reset'); if(btn) {btn.style.display = (String(state.current)===String(ADMIN_ID))?'inline-flex':'none'; btn.onclick = hardResetAll;}
+}
 const nameOf=(u)=> u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : (u.firstName || '@'+u.username);
 function syncUser(uid){const u=state.users[uid]; if(!u) return; u.updatedAt=Date.now(); save(); RT.send('user:update',{uid,diamonds:u.diamonds||0,points:u.points||0,updatedAt:u.updatedAt,photo:u.photo||null,firstName:u.firstName,lastName:u.lastName,username:u.username});}
 
@@ -343,15 +372,15 @@ function openPin(id){currentPostId=id;show(byId('m-pin')); }
 function doPin(){const p=state.posts.find(x=>x.id===currentPostId);if(!p)return;if(p.authorId!==state.current){toast('Только автор','err');return;}if(!spend(state.current,100)){hide(byId('m-pin'));return;}const ends=Date.now()+60*1000;state.pin.active={postId:p.id,endsAt:new Date(ends)};save();renderPin();RT.send('pin:update',serPin());hide(byId('m-pin'));toast('Закреплено на 1 минуту');}
 function markViewed(postId){const uid=state.current;if(!uid)return;state.viewsByUser[uid] ||= {};if(state.viewsByUser[uid][postId])return;const p=state.posts.find(x=>x.id===postId);if(!p)return;state.viewsByUser[uid][postId]=true;p.views++;award(uid,1);save();persistUserEngagement();renderFeed();RT.send('engage:view',{uid,postId});RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});}
 
-/* ===== PRESENCE ===== */
+/* ===== ПРИСУТСТВИЕ ===== */
 setInterval(()=>{const uid=state.current;state.presence[uid]=Date.now();RT.send('presence:ping',{uid});},5000);
 
-/* ===== FRIENDS ===== */
+/* ===== ДРУЗЬЯ ===== */
 const isFollowing=(me,to)=> !!(state.social.following[me]||[]).includes(to);
 function follow(me,to){if(me===to)return false;state.social.following[me] ||= [];state.social.followers[to]  ||= [];if(isFollowing(me,to))return false;state.social.following[me].push(to);state.social.followers[to].push(me);save();renderFriends();renderFeed();toast('Подписка оформлена');RT.send('social:follow',{from:me,to});}
 function unfollow(me,to){state.social.following[me]=(state.social.following[me]||[]).filter(x=>x!==to);state.social.followers[to]=(state.social.followers[to]||[]).filter(x=>x!==me);save();renderFriends();renderFeed();toast('Подписка снята','info');RT.send('social:unfollow',{from:me,to});}
 
-/* ===== RENDER ===== */
+/* ===== РЕНДЕР ===== */
 function renderHUD(){const u=state.users[state.current]||{};byId('bal').textContent=u.diamonds||0;byId('pts').textContent=u.points||0;const ends=state.pool?.epochEnds instanceof Date?state.pool.epochEnds:epochEnd();const left=ends.getTime()-Date.now();byId('eta').textContent=fmt(left);byId('prog').style.width=`${Math.max(0,Math.min(1,1-(left/(24*3600*1000))))*100}%`;byId('pool-amt').textContent=(state.pool.amt||0).toFixed(2);byId('pool-pill').textContent=(state.pool.amt||0).toFixed(0);renderProfile();}
 function renderProfile(){const u=state.users[state.current]||{};const ava=byId('pf-ava');ava.innerHTML=u.photo?`<img src="${u.photo}" referrerpolicy="no-referrer" alt="">`:`<span>${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</span>`;byId('pf-name').textContent=nameOf(u);byId('pf-id').textContent='ID: '+(u.id||'-');byId('pf-d').textContent=u.diamonds||0;byId('pf-p').textContent=state.posts.filter(p=>p.authorId===state.current).length;const myLikes=state.posts.filter(p=>p.authorId===state.current).reduce((a,b)=>a+(b.likes||0),0);byId('pf-rc').textContent=myLikes;byId('pf-pts').textContent=u.points||0;}
 let feedObserver=null;
@@ -379,37 +408,111 @@ function renderPin(){const w=byId('pin-wrap');if(!state.pin.active){w.style.disp
 function renderFriends(){const uid=state.current;const followingIds=state.social.following[uid]||[];const followersIds=state.social.followers[uid]||[];const flw=followingIds.map(id=>state.users[id]?nameOf(state.users[id]):('@'+id)).join('<br/>')||'—';const fol=followersIds.map(id=>state.users[id]?nameOf(state.users[id]):('@'+id)).join('<br/>')||'—';byId('following').innerHTML=flw;byId('followers').innerHTML=fol;}
 function renderAll(){renderHUD();renderFeed();renderFriends();}
 
-/* user modal */
+/* ===== ПРОФИЛЬ ЮЗЕРА (модалка) ===== */
 function openUser(uid){const me=state.current;const u=state.users[uid]||{id:uid,firstName:'User',username:String(uid)};const posts=state.posts.filter(p=>p.authorId===uid);const likes=posts.reduce((a,b)=>a+(b.likes||0),0);const views=posts.reduce((a,b)=>a+(b.views||0),0);byId('u-ava').innerHTML = u.photo? `<img src="${u.photo}" referrerpolicy="no-referrer" alt="">` : `<div class="u-ava">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`;byId('u-name').textContent=nameOf(u);byId('u-username').textContent='@'+(u.username||'');byId('u-posts').textContent=posts.length;byId('u-likes').textContent=likes;byId('u-views').textContent=views;const following=isFollowing(me,uid);byId('u-follow').style.display = (!following && me!==uid)?'inline-flex':'none';byId('u-unfollow').style.display = (following && me!==uid)?'inline-flex':'none';byId('u-follow').onclick=()=>{follow(me,uid); hide(byId('m-user'));};byId('u-unfollow').onclick=()=>{unfollow(me,uid); hide(byId('m-user'));};show(byId('m-user'));}
 
-/* serialization */
+/* ===== СЕРИАЛИЗАЦИЯ ===== */
 function serPost(p){return {...p,createdAt:p.createdAt instanceof Date?p.createdAt.toISOString():p.createdAt,boostedAt:p.boostedAt?(p.boostedAt instanceof Date?p.boostedAt.toISOString():p.boostedAt):null};}
 function serPin(){return {active:state.pin.active?{postId:state.pin.active.postId,endsAt:state.pin.active.endsAt.toISOString()}:null};}
 
-/* timers + settle (обнуляем баллы у всех) */
-function settleIfNeeded(){const now=new Date();const left=state.pool.epochEnds.getTime()-now.getTime();if(left>0)return;const justFinished=new Date(state.pool.epochEnds.getTime());justFinished.setUTCDate(justFinished.getUTCDate()-1);const eid=epochIdUTC(justFinished);if(state.pool.settledId===eid){state.pool.epochEnds=epochEnd();save();renderHUD();return;}const totalPts=Object.values(state.epochPoints||{}).reduce((a,b)=>a+(+b||0),0);const amount=state.pool.amt||0;const results={};if(totalPts>0&&amount>0){for(const uid in state.epochPoints){const share=(state.epochPoints[uid]||0)/totalPts;const gain=+(amount*share).toFixed(2);if(gain>0){state.users[uid] ||= {diamonds:0,points:0,firstName:'User',id:uid,username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+gain;results[uid]=gain;}}}
-state.pool.amt=0;state.pool.epochEnds=epochEnd();state.pool.settledId=eid;state.epochPoints={};for(const uid in state.users){state.users[uid].points=0;}save();renderHUD();RT.send('pool:settle',{eid,results,next:state.pool.epochEnds.toISOString(),resetPoints:true});}
-function tick(){if(state.pin.active&&toTime(state.pin.active.endsAt)<=Date.now()){state.pin.active=null;save();RT.send('pin:update',serPin());}if(!(state.pool?.epochEnds instanceof Date))state.pool.epochEnds=epochEnd();settleIfNeeded();renderHUD();renderPin();}
+/* ===== СБРОС ДЛЯ ВСЕХ ===== */
+function hardResetAll(){
+  if(String(state.current)!==String(ADMIN_ID)){toast('Нет прав','err');return;}
+  const at=Date.now();
+  state.app.resetAt=at;
+  state.posts=[]; state.pin.active=null;
+  state.pool.amt=0; state.pool.settledId=null;
+  state.epochPoints={}; state.viewsByUser={}; state.likesByUser={};
+  for(const uid in state.users) state.users[uid].points=0;
+  save(); renderAll();
+  try{
+    if(Telegram?.WebApp?.CloudStorage){
+      const cs=Telegram.WebApp.CloudStorage;
+      cs.setItem('df:pin', JSON.stringify({active:null}), ()=>{});
+      cs.setItem('df:pool', JSON.stringify({amt:0, epochEnds:epochEnd().toISOString(), settledId:null}), ()=>{});
+      cs.setItem(`df:liked:${state.current}`, '[]', ()=>{});
+      cs.setItem(`df:viewed:${state.current}:${epochIdUTC(new Date())}`, '[]', ()=>{});
+    }
+  }catch(_){}
+  RT.send('app:reset',{at});
+}
+
+/* ===== Таймеры и распределение пула ===== */
+function settleIfNeeded(){
+  const now=new Date();
+  const left=state.pool.epochEnds.getTime()-now.getTime();
+  if(left>0) return;
+
+  const justFinished=new Date(state.pool.epochEnds.getTime()); justFinished.setUTCDate(justFinished.getUTCDate()-1);
+  const eid=epochIdUTC(justFinished);
+  if(state.pool.settledId===eid){ state.pool.epochEnds=epochEnd(); save(); renderHUD(); return; }
+
+  const totalPts=Object.values(state.epochPoints||{}).reduce((a,b)=>a+(+b||0),0);
+  const amount=state.pool.amt||0;
+  const results={};
+  if(totalPts>0&&amount>0){
+    for(const uid in state.epochPoints){
+      const share=(state.epochPoints[uid]||0)/totalPts;
+      const gain=+(amount*share).toFixed(2);
+      if(gain>0){ state.users[uid] ||= {diamonds:0,points:0,firstName:'User',id:uid,username:uid}; state.users[uid].diamonds=(state.users[uid].diamonds||0)+gain; results[uid]=gain; }
+    }
+  }
+  state.pool.amt=0;
+  state.pool.epochEnds=epochEnd();
+  state.pool.settledId=eid;
+  state.epochPoints={};
+  for(const uid in state.users) state.users[uid].points=0;
+  save(); renderHUD();
+  RT.send('pool:settle',{eid,results,next:state.pool.epochEnds.toISOString(),resetPoints:true});
+
+  if(CLEAR_ALL_AT_SETTLE){ RT.send('app:reset',{at:Date.now()}); }
+}
+function tick(){
+  if(state.pin.active&&toTime(state.pin.active.endsAt)<=Date.now()){state.pin.active=null;save();RT.send('pin:update',serPin());}
+  if(!(state.pool?.epochEnds instanceof Date)) state.pool.epochEnds=epochEnd();
+  settleIfNeeded(); renderHUD(); renderPin();
+}
 setInterval(tick,1000);
 
-/* realtime handlers */
-RT.on((evt)=>{if(!evt||!evt.type)return;
-switch(evt.type){
-  case 'user:upsert':{const u=evt.payload.user;if(!u)break;state.users[u.id]={...(state.users[u.id]||{}),...u};save();renderFeed();renderFriends();break;}
-  case 'user:update':{const {uid,diamonds,points,updatedAt,photo,firstName,lastName,username}=evt.payload||{};if(!uid)return;state.users[uid] ||= {id:uid,diamonds:0,points:0,firstName:'User',username:uid};const cur=state.users[uid].updatedAt||0;if(!Number.isFinite(cur)||(Number.isFinite(updatedAt)&&updatedAt>=cur)){Object.assign(state.users[uid],{diamonds:+diamonds||0,points:+points||0,updatedAt:+updatedAt||Date.now()});if(photo)state.users[uid].photo=photo;if(firstName)state.users[uid].firstName=firstName;if(lastName!==undefined)state.users[uid].lastName=lastName;if(username)state.users[uid].username=username;if(uid===state.current){save();renderHUD();}}break;}
-  case 'post:new':{const p=evt.payload.post; if(!state.posts.find(x=>x.id===p.id)){state.posts.unshift({ ...p, createdAt:new Date(p.createdAt), boostedAt:p.boostedAt?new Date(p.boostedAt):null }); save(); renderFeed();} break;}
-  case 'post:stats':{const {id,likes,views}=evt.payload;const p=state.posts.find(x=>x.id===id);if(p){p.likes=Math.max(p.likes,likes);p.views=Math.max(p.views,views);save();renderFeed();}break;}
-  case 'post:boost':{const {id,boostedAt}=evt.payload;const p=state.posts.find(x=>x.id===id);if(p){p.boostedAt=new Date(boostedAt);save();renderFeed();}break;}
-  case 'pin:update':{const d=evt.payload;state.pin.active=d.active?{postId:d.active.postId,endsAt:new Date(d.active.endsAt)}:null;save();renderPin();break;}
-  case 'social:follow':{const {from,to}=evt.payload;state.social.followers[to] ||= [];if(!state.social.followers[to].includes(from))state.social.followers[to].push(from);save();renderFriends();renderFeed();break;}
-  case 'social:unfollow':{const {from,to}=evt.payload;state.social.followers[to]=(state.social.followers[to]||[]).filter(x=>x!==from);save();renderFriends();renderFeed();break;}
-  case 'presence:ping':{const {uid}=evt.payload;state.presence[uid]=Date.now();break;}
-  case 'points:add':{const {uid,points}=evt.payload||{};if(Number.isFinite(points)&&points>0){state.epochPoints[uid]=(state.epochPoints[uid]||0)+points;}break;}
-  case 'pool:add':{ if(evt.origin===INSTANCE) break; const {amount}=evt.payload||{}; if(typeof amount==='number'){state.pool.amt=(state.pool.amt||0)+amount;save();renderHUD();} break;}
-  case 'pool:settle':{const {eid,results,next,resetPoints}=evt.payload||{};if(!eid||state.pool.settledId===eid)break;for(const uid in results){state.users[uid] ||= {diamonds:0,points:0,id:uid,firstName:'User',username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+(+results[uid]||0);}state.pool.amt=0;state.pool.settledId=eid;if(next)state.pool.epochEnds=new Date(next);state.epochPoints={};if(resetPoints){for(const uid in state.users){state.users[uid].points=0;}}save();renderHUD();break;}
-}});
+/* ===== Обработка событий RT ===== */
+RT.on((evt)=>{ if(!evt||!evt.type) return;
+  switch(evt.type){
+    case 'app:reset':{
+      const at=evt.payload?.at || Date.now();
+      state.app.resetAt=at;
+      state.posts=[]; state.pin.active=null;
+      state.pool.amt=0; state.pool.settledId=null;
+      state.epochPoints={}; state.viewsByUser={}; state.likesByUser={};
+      for(const uid in state.users) state.users[uid].points=0;
+      save(); renderAll();
+      try{
+        if(Telegram?.WebApp?.CloudStorage){
+          const cs=Telegram.WebApp.CloudStorage;
+          cs.setItem('df:pin', JSON.stringify({active:null}), ()=>{});
+          cs.setItem('df:pool', JSON.stringify({amt:0, epochEnds:epochEnd().toISOString(), settledId:null}), ()=>{});
+          cs.setItem(`df:liked:${state.current}`, '[]', ()=>{});
+          cs.setItem(`df:viewed:${state.current}:${epochIdUTC(new Date())}`, '[]', ()=>{});
+        }
+      }catch(_){}
+      toast('Глобальный сброс выполнен','info');
+      break;
+    }
+    case 'user:upsert':{const u=evt.payload.user;if(!u)break;state.users[u.id]={...(state.users[u.id]||{}),...u};save();renderFeed();renderFriends();break;}
+    case 'user:update':{const {uid,diamonds,points,updatedAt,photo,firstName,lastName,username}=evt.payload||{};if(!uid)return;state.users[uid] ||= {id:uid,diamonds:0,points:0,firstName:'User',username:uid};const cur=state.users[uid].updatedAt||0;if(!Number.isFinite(cur)||(Number.isFinite(updatedAt)&&updatedAt>=cur)){Object.assign(state.users[uid],{diamonds:+diamonds||0,points:+points||0,updatedAt:+updatedAt||Date.now()});if(photo)state.users[uid].photo=photo;if(firstName)state.users[uid].firstName=firstName;if(lastName!==undefined)state.users[uid].lastName=lastName;if(username)state.users[uid].username=username;if(uid===state.current){save();renderHUD();}}break;}
+    case 'post:new':{const p=evt.payload.post; if(!state.posts.find(x=>x.id===p.id)){state.posts.unshift({ ...p, createdAt:new Date(p.createdAt), boostedAt:p.boostedAt?new Date(p.boostedAt):null }); save(); renderFeed();} break;}
+    case 'post:stats':{const {id,likes,views}=evt.payload;const p=state.posts.find(x=>x.id===id);if(p){p.likes=Math.max(p.likes,likes);p.views=Math.max(p.views,views);save();renderFeed();}break;}
+    case 'post:boost':{const {id,boostedAt}=evt.payload;const p=state.posts.find(x=>x.id===id);if(p){p.boostedAt=new Date(boostedAt);save();renderFeed();}break;}
+    case 'pin:update':{const d=evt.payload;state.pin.active=d.active?{postId:d.active.postId,endsAt:new Date(d.active.endsAt)}:null;save();renderPin();break;}
+    case 'social:follow':{const {from,to}=evt.payload;state.social.followers[to] ||= [];if(!state.social.followers[to].includes(from))state.social.followers[to].push(from);save();renderFriends();renderFeed();break;}
+    case 'social:unfollow':{const {from,to}=evt.payload;state.social.followers[to]=(state.social.followers[to]||[]).filter(x=>x!==from);save();renderFriends();renderFeed();break;}
+    case 'presence:ping':{const {uid}=evt.payload;state.presence[uid]=Date.now();break;}
+    case 'points:add':{const {uid,points}=evt.payload||{};if(Number.isFinite(points)&&points>0){state.epochPoints[uid]=(state.epochPoints[uid]||0)+points;}break;}
+    case 'pool:add':{ if(evt.origin===INSTANCE) break; const {amount}=evt.payload||{}; if(typeof amount==='number'){state.pool.amt=(state.pool.amt||0)+amount;save();renderHUD();} break;}
+    case 'pool:settle':{const {eid,results,next,resetPoints}=evt.payload||{};if(!eid||state.pool.settledId===eid)break;for(const uid in results){state.users[uid] ||= {diamonds:0,points:0,id:uid,firstName:'User',username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+(+results[uid]||0);}state.pool.amt=0;state.pool.settledId=eid;if(next)state.pool.epochEnds=new Date(next);state.epochPoints={};if(resetPoints){for(const uid in state.users){state.users[uid].points=0;}}save();renderHUD();break;}
+  }
+});
 
-/* UI wiring */
+/* ===== UI ===== */
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-close]'))e.target.closest('.modal').style.display='none';
   const nav=e.target.closest('.nav button');if(nav&&nav.dataset.go){go(nav.dataset.go);}
@@ -425,9 +528,9 @@ byId('tab-friends').onclick=()=>{byId('tab-friends').style.boxShadow='var(--ring
 byId('friend-add').onclick=()=>{const v=byId('friend-input').value.trim();if(!v)return;const me=state.current;let id=v.startsWith('@')?v.slice(1):v;state.users[id] ||= {id,firstName:v.startsWith('@')?('@'+id):('User '+id),username:id,diamonds:0,points:0};state.epochPoints[id] ||= 0;follow(me,id);byId('friend-input').value='';};
 byId('to-friends').onclick=()=>go('friends-section'); byId('to-store').onclick=()=>go('store-section');
 
-/* boot */
+/* ===== BOOT ===== */
 (async()=>{await load();await initUser();renderAll();RT.ready.finally(()=>{RT.send('user:upsert',{user:state.users[state.current]});});})();
-window.like=like; window.openBoost=openBoost; window.openPin=openPin; window.follow=follow; window.unfollow=unfollow;
+window.like=like; window.openBoost=openBoost; window.openPin=openPin; window.follow=follow; window.unfollow=unfollow; window.hardResetAll=hardResetAll;
 
 } // end !__STOP_APP__
 </script>
