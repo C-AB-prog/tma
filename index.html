@@ -23,7 +23,6 @@ body{margin:0;background:
 .logo i{color:#fff}.title{font-weight:900}
 .head-kpis{display:flex;gap:8px}
 .pill{display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));font-size:12px;font-weight:900}
-.pill i{opacity:.95}
 .meta-line{padding:0 14px 10px;color:var(--muted);font-size:12px}
 .meta-line .chip{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05)}
 .progress{height:3px;background:rgba(255,255,255,.08)} .progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .4s}
@@ -46,7 +45,7 @@ body{margin:0;background:
 .badge.rocket{color:var(--ok);border-color:rgba(68,214,163,.4);background:linear-gradient(180deg, rgba(68,214,163,.18), rgba(255,255,255,.02))}
 .empty{padding:44px 18px;text-align:center;color:var(--muted)}
 
-/* PIN redesigned */
+/* PIN */
 .pinned{margin:12px 0;border-radius:18px;display:none}
 .pinned .card{background:linear-gradient(180deg, rgba(125,169,255,.12), rgba(125,169,255,.03)),linear-gradient(180deg,#151b2e,#141a2a);border:1px solid rgba(125,169,255,.25);box-shadow:0 18px 50px rgba(125,169,255,.18);position:relative;overflow:hidden}
 .pinned .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--brand),var(--brand-2));opacity:.8}
@@ -60,7 +59,7 @@ body{margin:0;background:
 .pin-meta{display:flex;gap:14px;color:var(--muted);font-size:12px;margin-top:6px}
 #pin-cta .btn{padding:11px 14px}
 
-/* Nav & misc */
+/* Nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:90;backdrop-filter:blur(12px);background:linear-gradient(to top, rgba(11,15,24,.92), rgba(11,15,24,.55));border-top:1px solid rgba(255,255,255,.08);padding:10px 8px calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .nav button{border:none;background:none;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center;padding:8px 6px;border-radius:10px;font-size:11px}
 .nav button.active{color:var(--brand);background:rgba(125,169,255,.16)}
@@ -93,24 +92,22 @@ body{margin:0;background:
 </head>
 <body>
 
-<!-- gate -->
 <script>
-(function gate(){
+/* gate: только внутри Telegram */
+(function(){
   const tg=window.Telegram?.WebApp; let BOT='t11stMini_bot'; if(BOT.startsWith('@')) BOT=BOT.slice(1);
   if(!tg || !tg.initDataUnsafe?.user){
-    const link=`https://t.me/${BOT}?startapp=tma`;
-    document.body.innerHTML = `
+    document.body.innerHTML=`
       <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0f18;color:#f4f7ff;padding:24px;text-align:center">
         <div style="max-width:520px;background:#151b2e;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px">
           <div style="font-size:20px;font-weight:900;margin-bottom:6px">Откройте через Telegram</div>
           <div style="color:#9aa3b5;margin-bottom:12px">Это мини-приложение доступно только внутри Telegram.</div>
-          <a href="${link}" style="display:inline-block;padding:12px 16px;border-radius:12px;background:linear-gradient(135deg,#7da9ff,#a67aff);color:white;font-weight:900;text-decoration:none">Открыть в Telegram</a>
+          <a href="https://t.me/${BOT}?startapp=tma" style="display:inline-block;padding:12px 16px;border-radius:12px;background:linear-gradient(135deg,#7da9ff,#a67aff);color:#fff;font-weight:900;text-decoration:none">Открыть в Telegram</a>
           <div style="color:#9aa3b5;font-size:12px;margin-top:8px">t.me/${BOT}</div>
         </div>
       </div>`;
     window.__STOP_APP__=true; return;
   }
-  window.__STOP_APP__=false;
   try{ tg.ready(); tg.expand(); tg.disableVerticalSwipes?.(); }catch(e){}
 })();
 </script>
@@ -281,206 +278,125 @@ body{margin:0;background:
 <script>
 if(!window.__STOP_APP__){
 
-/* constants */
-const BOOST_WINDOW=5*60*1000;                 // 5 минут
-const ABLY_CHANNEL='tma';                     // единый канал для всех
-const INSTANCE = (()=>{                       // уникальный id этого инстанса (для анти-дублей)
-  let v=localStorage.getItem('df-instance');
-  if(!v){ v=(Date.now().toString(36)+Math.random().toString(36).slice(2,8)); localStorage.setItem('df-instance',v); }
-  return v;
-})();
-
-/* theme */
+/* ===== THEME ===== */
 (function(){try{const tp=Telegram?.WebApp?.themeParams||{};const set=(k,v)=>v&&document.documentElement.style.setProperty(k,v);
 if(tp.text_color)set('--text',tp.text_color); if(tp.bg_color)set('--bg',tp.bg_color);
 if(tp.secondary_bg_color){set('--surface',tp.secondary_bg_color);set('--card',tp.secondary_bg_color);}
 if(tp.button_color)set('--brand',tp.button_color); if(tp.hint_color)set('--muted',tp.hint_color);}catch(e){} })();
 
-/* utils */
+/* ===== CONST & UTILS ===== */
+const BOOST_WINDOW=5*60*1000;
+const ABLY_CHANNEL='tma';
+const INSTANCE = (()=>{let v=localStorage.getItem('df-instance');if(!v){v=(Date.now().toString(36)+Math.random().toString(36).slice(2,8));localStorage.setItem('df-instance',v);}return v;})();
 const epochEnd=()=> new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()+1,0,0,0));
-const epochIdUTC=(d)=>{const y=d.getUTCFullYear();const m=String(d.getUTCMonth()+1).padStart(2,'0');const day=String(d.getUTCDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
-const fmt=(ms)=>{if(!Number.isFinite(ms))ms=0;if(ms<0)ms=0;const s=(ms/1000)|0;const h=String((s/3600)|0).padStart(2,'0');const m=String(((s%3600)/60)|0).padStart(2,'0');const ss=String(s%60).padStart(2,'0');return `${h}:${m}:${ss}`};
+const epochIdUTC=(d)=>`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+const fmt=(ms)=>{if(!Number.isFinite(ms)||ms<0)ms=0;const s=(ms/1000)|0;return `${String((s/3600)|0).padStart(2,'0')}:${String(((s%3600)/60)|0).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`};
 const byId=(id)=>document.getElementById(id);
 const esc=(s)=>String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const toTime=(d)=>{ if(!d) return 0; if(d instanceof Date && Number.isFinite(d.getTime())) return d.getTime(); const t=Date.parse(d); return Number.isFinite(t)?t:0; };
 function toast(m,kind='ok'){const t=document.createElement('div');t.className=`t ${kind==='err'?'err':kind==='info'?'info':'ok'}`;t.textContent=m;byId('toast').appendChild(t);setTimeout(()=>t.remove(),2600);}
 function show(el){el.style.display='flex'} function hide(el){el.style.display='none'}
 function go(id){document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.go===id));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));}
-const avatarHTML=(u)=>{ const ph=u.photo||u.photo_url; if(ph) return `<div class="avatar"><img src="${ph}" alt=""></div>`; return `<div class="avatar">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`; }
+const avatarHTML=(u)=>{ const ph=u.photo||u.photo_url; return ph ? `<div class="avatar"><img src="${ph}" referrerpolicy="no-referrer" alt=""></div>` : `<div class="avatar">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`; }
 
-/* CloudStorage */
+/* ===== CLOUD STORAGE ===== */
 const CS=Telegram?.WebApp?.CloudStorage;
 const cloud={avail:!!CS,get:(k)=>new Promise(res=>CS?.getItem(k,(e,v)=>res(e?null:v))),set:(k,v)=>new Promise((res,rej)=>CS?.setItem(k,v,(e)=>e?rej(e):res())),mget:(keys)=>new Promise(res=>CS?.getItems(keys,(e,items)=>res(e?{}:items||{})))};
 
-/* Realtime (единый канал) */
+/* ===== REALTIME ===== */
 const RT=(()=>{const listeners=new Set();const KEY='E9rkjQ.VFe0Fg:BHe2MLdpKyWGye0G7gZ1lAMruelNAmTxep63oVw2uoY';
-let ab=null,ch=null; const ready=(async()=>{try{ab=new Ably.Realtime.Promise(KEY);ch=ab.channels.get(ABLY_CHANNEL);
-try{const page=await ch.history({limit:300});const items=page?.items||[];for(let i=items.length-1;i>=0;i--){const m=items[i];const data=m.data&&m.data.type?m.data:{type:m.name,payload:m.data,ts:Date.parse(m.timestamp)||Date.now()};listeners.forEach(fn=>fn(data,true));}}catch(_){}
-ch.subscribe((msg)=>{const data=msg.data&&msg.data.type?msg.data:{type:msg.name,payload:msg.data,ts:Date.now()};listeners.forEach(fn=>fn(data,false));});}catch(e){toast('Ably не подключился','err');}})();
-return {ready,send:(type,payload)=>{const msg={type,payload,ts:Date.now(),origin:INSTANCE};try{ch&&ch.publish(type,msg);}catch(e){};},on:(fn)=>listeners.add(fn)};})();
+let ab=null,ch=null;const ready=(async()=>{try{ab=new Ably.Realtime.Promise(KEY);ch=ab.channels.get(ABLY_CHANNEL);
+try{const page=await ch.history({limit:300});(page?.items||[]).forEach(m=>{const d=m.data&&m.data.type?m.data:{type:m.name,payload:m.data,ts:Date.parse(m.timestamp)||Date.now()};listeners.forEach(fn=>fn(d,true));});}catch(e){}
+ch.subscribe(msg=>{const d=msg.data&&msg.data.type?msg.data:{type:msg.name,payload:msg.data,ts:Date.now()};listeners.forEach(fn=>fn(d,false));});}catch(e){toast('Ably не подключился','err');}})();
+return{ready,send:(type,payload)=>{try{ch&&ch.publish(type,{type,payload,ts:Date.now(),origin:INSTANCE});}catch(e){}},on:(fn)=>listeners.add(fn)};})();
 
-/* state */
+/* ===== STATE ===== */
 let state={users:{},current:null,posts:[],pool:{amt:0,epochEnds:epochEnd(),settledId:null},pin:{active:null},social:{following:{},followers:{}},presence:{},viewsByUser:{},likesByUser:{},epochPoints:{}};
-const LS_MAIN='diamond-feed';
+const LS='diamond-feed';
 function revive(o){if(!o||typeof o!=='object')return o;if(o.__d)return new Date(o.__d);if(Array.isArray(o)){for(let i=0;i<o.length;i++)o[i]=revive(o[i]);return o;}for(const k in o)o[k]=revive(o[k]);return o;}
-function saveLS(){try{const json=JSON.stringify(state,(k,v)=>v instanceof Date?{__d:v.toISOString()}:v);localStorage.setItem(LS_MAIN,json);}catch(_){}} 
-function loadLS(){try{const raw=localStorage.getItem(LS_MAIN);if(!raw)return false;const data=revive(JSON.parse(raw));
-data.users ||= {};data.posts ||= [];data.pool ||= {};data.pin ||= {};data.social ||= {following:{},followers:{}};data.viewsByUser ||= {};data.likesByUser ||= {};data.epochPoints ||= {};
-if(!(data.pool.epochEnds instanceof Date)||!Number.isFinite(data.pool.epochEnds.getTime()))data.pool.epochEnds=epochEnd();if(typeof data.pool.amt!=='number')data.pool.amt=0;state=data;return true;}catch(_){return false;}}
-async function load(){loadLS();if(cloud.avail){try{const got=await cloud.mget(['df:pool','df:pin']);if(got['df:pool']){const p=JSON.parse(got['df:pool']);state.pool.amt=+p.amt||0;state.pool.epochEnds=new Date(p.epochEnds||epochEnd());state.pool.settledId=p.settledId||null;}if(got['df:pin']){const d=JSON.parse(got['df:pin']);state.pin.active=d?.active?{postId:d.active.postId,endsAt:new Date(d.active.endsAt)}:null;}}catch(_){}}state.users ||= {};state.posts ||= [];state.social ||= {following:{},followers:{}};state.viewsByUser ||= {};state.likesByUser ||= {};state.epochPoints ||= {};
-if(!(state.pool.epochEnds instanceof Date)||!Number.isFinite(state.pool.epochEnds.getTime()))state.pool.epochEnds=epochEnd();return true;}
-function save(){saveLS();if(!cloud.avail)return;const uid=state.current;try{if(uid&&state.users[uid])cloud.set(`df:user:${uid}`,JSON.stringify(state.users[uid]));cloud.set(`df:pool`,JSON.stringify({amt:state.pool.amt||0,epochEnds:state.pool.epochEnds.toISOString(),settledId:state.pool.settledId||null}));cloud.set(`df:pin`,JSON.stringify(serPin()));}catch(_){}} 
+function saveLS(){try{localStorage.setItem(LS,JSON.stringify(state,(k,v)=>v instanceof Date?{__d:v.toISOString()}:v));}catch(_){}} 
+function loadLS(){try{const raw=localStorage.getItem(LS);if(!raw)return false;const d=revive(JSON.parse(raw));d.users||={};d.posts||=[];d.pool||={};d.pin||={};d.social||={following:{},followers:{}};d.viewsByUser||={};d.likesByUser||={};d.epochPoints||={};if(!(d.pool.epochEnds instanceof Date))d.pool.epochEnds=epochEnd();state=d;return true;}catch(_){return false;}}
+async function load(){loadLS();if(cloud.avail){try{const got=await cloud.mget(['df:pool','df:pin']);if(got['df:pool']){const p=JSON.parse(got['df:pool']);state.pool.amt=+p.amt||0;state.pool.epochEnds=new Date(p.epochEnds||epochEnd());state.pool.settledId=p.settledId||null;}if(got['df:pin']){const d=JSON.parse(got['df:pin']);state.pin.active=d?.active?{postId:d.active.postId,endsAt:new Date(d.active.endsAt)}:null;}}catch(_){}}}
+function save(){saveLS();if(!cloud.avail)return;try{const uid=state.current;if(uid&&state.users[uid])cloud.set(`df:user:${uid}`,JSON.stringify(state.users[uid]));cloud.set(`df:pool`,JSON.stringify({amt:state.pool.amt||0,epochEnds:state.pool.epochEnds.toISOString(),settledId:state.pool.settledId||null}));cloud.set(`df:pin`,JSON.stringify(serPin()));}catch(_){}}
 function persistUserEngagement(){if(!cloud.avail)return;const uid=state.current;if(!uid)return;try{const liked=Object.keys(state.likesByUser[uid]||{}).slice(-500);cloud.set(`df:liked:${uid}`,JSON.stringify(liked));const eid=epochIdUTC(new Date());const viewed=Object.keys(state.viewsByUser[uid]||{}).slice(-1000);cloud.set(`df:viewed:${uid}:${eid}`,JSON.stringify(viewed));}catch(_){}} 
 
-/* user */
+/* ===== USER ===== */
 async function initUser(){const u=Telegram?.WebApp?.initDataUnsafe?.user;const id=String(u.id);
-if(!state.users[id]) state.users[id]={id,firstName:u.first_name||'User',lastName:u.last_name||'',username:u.username||('user'+id),diamonds:300,isPremium:!!u.is_premium,points:0,updatedAt:Date.now(),photo:u.photo_url||null};
-else{ state.users[id].photo = u.photo_url || state.users[id].photo || null; }
-if(cloud.avail){try{const raw=await cloud.get(`df:user:${id}`);if(raw){const fromCS=JSON.parse(raw);const cur=state.users[id];const diamonds=Math.max(+cur.diamonds||0,+fromCS.diamonds||0);const points=Math.max(+cur.points||0,+fromCS.points||0);state.users[id]={...cur,...fromCS,diamonds,points};}}catch(_){}} 
+state.users[id] ||= {id,firstName:u.first_name||'User',lastName:u.last_name||'',username:u.username||('user'+id),diamonds:300,isPremium:!!u.is_premium,points:0,updatedAt:Date.now(),photo:u.photo_url||null};
+state.users[id].photo = u.photo_url || state.users[id].photo || null;
+if(cloud.avail){try{const raw=await cloud.get(`df:user:${id}`);if(raw){const cs=JSON.parse(raw);const cur=state.users[id];state.users[id]={...cur,...cs,diamonds:Math.max(+cur.diamonds||0,+cs.diamonds||0),points:Math.max(+cur.points||0,+cs.points||0)};}}catch(_){}} 
 state.current=id;state.social.following[id] ||= [];state.social.followers[id] ||= [];state.viewsByUser[id] ||= {};state.likesByUser[id] ||= {};state.epochPoints[id] ||= 0;}
 const nameOf=(u)=> u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : (u.firstName || '@'+u.username);
 function syncUser(uid){const u=state.users[uid]; if(!u) return; u.updatedAt=Date.now(); save(); RT.send('user:update',{uid,diamonds:u.diamonds||0,points:u.points||0,updatedAt:u.updatedAt,photo:u.photo||null,firstName:u.firstName,lastName:u.lastName,username:u.username});}
 
-/* economy/posts */
+/* ===== ECONOMY/POSTS ===== */
 function spend(uid,amt){const u=state.users[uid];if(!u){toast('Сессия не инициализирована','err');return false;}
 if(u.diamonds<amt){toast(`Недостаточно алмазов (${u.diamonds}/${amt})`,'err');return false;}
 u.diamonds-=amt;state.pool.amt=(state.pool.amt||0)+amt;syncUser(uid);renderHUD();RT.send('pool:add',{amount:amt,from:uid});return true;}
-function award(uid,points){if(!uid||!Number.isFinite(points)||points<=0)return;state.users[uid].points=(state.users[uid].points||0)+points;state.epochPoints[uid]=(state.epochPoints[uid]||0)+points;syncUser(uid);renderHUD();renderProfile();RT.send('points:add',{uid,points});}
+function award(uid,points){if(!uid||!Number.isFinite(points)||points<=0)return;state.users[uid].points=(state.users[uid].points||0)+points;state.epochPoints[uid]=(state.epochPoints[uid]||0)+points;syncUser(uid);renderHUD();RT.send('points:add',{uid,points});}
 function publish(uid,text){const p={id:String(Date.now()+Math.random()),authorId:uid,text,createdAt:new Date(),likes:0,views:0,boostedAt:null};state.posts.unshift(p);save();renderAll();RT.send('post:new',{post:serPost(p)});return p;}
-
-/* actions */
-function createPostFlow(){const txt=byId('post-txt').value.trim();if(!txt){toast('Введите текст','err');return;}
-if(/https?:\/\//i.test(txt)){toast('Ссылки запрещены','err');return;}
-if(txt.length>500){toast('Слишком длинно','err');return;}
-if(!spend(state.current,10))return;publish(state.current,txt);hide(byId('m-create'));byId('post-txt').value='';toast('Пост опубликован!');}
-function like(postId){const uid=state.current;state.likesByUser[uid] ||= {};if(state.likesByUser[uid][postId]){toast('Уже лайкали','info');return;}
-const p=state.posts.find(x=>x.id===postId);if(!p||p.authorId===uid)return;state.likesByUser[uid][postId]=true;p.likes++;p.views++;award(uid,2);save();persistUserEngagement();renderFeed();
-RT.send('engage:like',{uid,postId});RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});}
-let currentPostId=null;
-function openBoost(id){currentPostId=id;const p=state.posts.find(x=>x.id===id);const left=p?.boostedAt?(toTime(p.boostedAt)+BOOST_WINDOW - Date.now()):0;byId('boost-hint').textContent=left>0?`Доступно через ${fmt(left)}`:'';show(byId('m-boost'));}
-function doBoost(){const p=state.posts.find(x=>x.id===currentPostId);if(!p)return;if(p.authorId!==state.current){toast('Только автор','err');return;}
-const left=p.boostedAt?(toTime(p.boostedAt)+BOOST_WINDOW - Date.now()):0;if(left>0){toast('Кулдаун 5 минут','err');return;}
-if(!spend(state.current,10)){hide(byId('m-boost'));return;}p.boostedAt=new Date();save();hide(byId('m-boost'));renderAll();RT.send('post:boost',{id:p.id,boostedAt:p.boostedAt.toISOString()});toast('Пост поднят');}
+function createPostFlow(){const txt=byId('post-txt').value.trim();if(!txt){toast('Введите текст','err');return;}if(/https?:\/\//i.test(txt)){toast('Ссылки запрещены','err');return;}if(txt.length>500){toast('Слишком длинно','err');return;}if(!spend(state.current,10))return;publish(state.current,txt);hide(byId('m-create'));byId('post-txt').value='';toast('Пост опубликован!');}
+function like(postId){const uid=state.current;state.likesByUser[uid] ||= {};if(state.likesByUser[uid][postId]){toast('Уже лайкали','info');return;}const p=state.posts.find(x=>x.id===postId);if(!p||p.authorId===uid)return;state.likesByUser[uid][postId]=true;p.likes++;p.views++;award(uid,2);save();persistUserEngagement();renderFeed();RT.send('engage:like',{uid,postId});RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});}
+let currentPostId=null;function openBoost(id){currentPostId=id;const p=state.posts.find(x=>x.id===id);const left=p?.boostedAt?(toTime(p.boostedAt)+BOOST_WINDOW - Date.now()):0;byId('boost-hint').textContent=left>0?`Доступно через ${fmt(left)}`:'';show(byId('m-boost'));}
+function doBoost(){const p=state.posts.find(x=>x.id===currentPostId);if(!p)return;if(p.authorId!==state.current){toast('Только автор','err');return;}const left=p.boostedAt?(toTime(p.boostedAt)+BOOST_WINDOW - Date.now()):0;if(left>0){toast('Кулдаун 5 минут','err');return;}if(!spend(state.current,10)){hide(byId('m-boost'));return;}p.boostedAt=new Date();save();hide(byId('m-boost'));renderAll();RT.send('post:boost',{id:p.id,boostedAt:p.boostedAt.toISOString()});toast('Пост поднят');}
 function openPin(id){currentPostId=id;show(byId('m-pin')); }
-function doPin(){const p=state.posts.find(x=>x.id===currentPostId);if(!p)return;if(p.authorId!==state.current){toast('Только автор','err');return;}
-if(!spend(state.current,100)){hide(byId('m-pin'));return;}
-const ends=Date.now()+60*1000;state.pin.active={postId:p.id,endsAt:new Date(ends)};save();renderPin();RT.send('pin:update',serPin());hide(byId('m-pin'));toast('Закреплено на 1 минуту');}
-function markViewed(postId){const uid=state.current;if(!uid)return;state.viewsByUser[uid] ||= {};if(state.viewsByUser[uid][postId])return;
-const p=state.posts.find(x=>x.id===postId);if(!p)return;state.viewsByUser[uid][postId]=true;p.views++;award(uid,1);save();persistUserEngagement();renderFeed();
-RT.send('engage:view',{uid,postId});RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});}
+function doPin(){const p=state.posts.find(x=>x.id===currentPostId);if(!p)return;if(p.authorId!==state.current){toast('Только автор','err');return;}if(!spend(state.current,100)){hide(byId('m-pin'));return;}const ends=Date.now()+60*1000;state.pin.active={postId:p.id,endsAt:new Date(ends)};save();renderPin();RT.send('pin:update',serPin());hide(byId('m-pin'));toast('Закреплено на 1 минуту');}
+function markViewed(postId){const uid=state.current;if(!uid)return;state.viewsByUser[uid] ||= {};if(state.viewsByUser[uid][postId])return;const p=state.posts.find(x=>x.id===postId);if(!p)return;state.viewsByUser[uid][postId]=true;p.views++;award(uid,1);save();persistUserEngagement();renderFeed();RT.send('engage:view',{uid,postId});RT.send('post:stats',{id:p.id,likes:p.likes,views:p.views});}
 
-/* presence */
+/* ===== PRESENCE ===== */
 setInterval(()=>{const uid=state.current;state.presence[uid]=Date.now();RT.send('presence:ping',{uid});},5000);
-function isOnline(uid){const t=state.presence[uid]||0;return Date.now()-t<30000;}
 
-/* friends */
+/* ===== FRIENDS ===== */
 const isFollowing=(me,to)=> !!(state.social.following[me]||[]).includes(to);
 function follow(me,to){if(me===to)return false;state.social.following[me] ||= [];state.social.followers[to]  ||= [];if(isFollowing(me,to))return false;state.social.following[me].push(to);state.social.followers[to].push(me);save();renderFriends();renderFeed();toast('Подписка оформлена');RT.send('social:follow',{from:me,to});}
 function unfollow(me,to){state.social.following[me]=(state.social.following[me]||[]).filter(x=>x!==to);state.social.followers[to]=(state.social.followers[to]||[]).filter(x=>x!==me);save();renderFriends();renderFeed();toast('Подписка снята','info');RT.send('social:unfollow',{from:me,to});}
 
-/* render */
-function renderHUD(){const u=state.users[state.current]||{};byId('bal').textContent=u.diamonds||0;byId('pts').textContent=u.points||0;
-const ends=state.pool?.epochEnds instanceof Date?state.pool.epochEnds:epochEnd();const left=ends.getTime()-Date.now();byId('eta').textContent=fmt(left);
-byId('prog').style.width=`${Math.max(0,Math.min(1,1-(left/(24*3600*1000))))*100}%`;byId('pool-amt').textContent=(state.pool.amt||0).toFixed(2);byId('pool-pill').textContent=(state.pool.amt||0).toFixed(0);
-renderProfile();}
-function renderProfile(){const u=state.users[state.current]||{};const ava=byId('pf-ava');ava.innerHTML=u.photo?`<img src="${u.photo}" alt="">`:`<span>${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</span>`;
-byId('pf-name').textContent=nameOf(u);byId('pf-id').textContent='ID: '+(u.id||'-');byId('pf-d').textContent=u.diamonds||0;byId('pf-p').textContent=state.posts.filter(p=>p.authorId===state.current).length;
-const myLikes=state.posts.filter(p=>p.authorId===state.current).reduce((a,b)=>a+(b.likes||0),0);
-byId('pf-rc').textContent=myLikes;byId('pf-pts').textContent=u.points||0;}
+/* ===== RENDER ===== */
+function renderHUD(){const u=state.users[state.current]||{};byId('bal').textContent=u.diamonds||0;byId('pts').textContent=u.points||0;const ends=state.pool?.epochEnds instanceof Date?state.pool.epochEnds:epochEnd();const left=ends.getTime()-Date.now();byId('eta').textContent=fmt(left);byId('prog').style.width=`${Math.max(0,Math.min(1,1-(left/(24*3600*1000))))*100}%`;byId('pool-amt').textContent=(state.pool.amt||0).toFixed(2);byId('pool-pill').textContent=(state.pool.amt||0).toFixed(0);renderProfile();}
+function renderProfile(){const u=state.users[state.current]||{};const ava=byId('pf-ava');ava.innerHTML=u.photo?`<img src="${u.photo}" referrerpolicy="no-referrer" alt="">`:`<span>${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</span>`;byId('pf-name').textContent=nameOf(u);byId('pf-id').textContent='ID: '+(u.id||'-');byId('pf-d').textContent=u.diamonds||0;byId('pf-p').textContent=state.posts.filter(p=>p.authorId===state.current).length;const myLikes=state.posts.filter(p=>p.authorId===state.current).reduce((a,b)=>a+(b.likes||0),0);byId('pf-rc').textContent=myLikes;byId('pf-pts').textContent=u.points||0;}
 let feedObserver=null;
-function renderFeed(){const feed=byId('feed');const uid=state.current;try{
-const now=Date.now();
-const items=(Array.isArray(state.posts)?state.posts:[]).filter(p=>p&&p.id&&p.authorId).sort((a,b)=>{
-  const ab= (toTime(b.boostedAt)&& now-toTime(b.boostedAt)<BOOST_WINDOW)?toTime(b.boostedAt):0;
-  const aa= (toTime(a.boostedAt)&& now-toTime(a.boostedAt)<BOOST_WINDOW)?toTime(a.boostedAt):0;
-  return (ab-aa) || (toTime(b.createdAt)-toTime(a.createdAt));
-});
-const friendsOn=byId('tab-friends').dataset.active==='1';const following=new Set(state.social?.following?.[uid]||[]);const list=friendsOn?items.filter(p=>p.authorId===uid||following.has(p.authorId)):items;
-feed.innerHTML=list.map(p=>{
-  const a=state.users[p.authorId]||{firstName:'User',username:''};
-  const liked=!!(state.likesByUser[uid]&&state.likesByUser[uid][p.id]);
-  const boostedActive = toTime(p.boostedAt) && (now - toTime(p.boostedAt) < BOOST_WINDOW);
-  const addBtn = p.authorId===uid ? `<button class="btn" disabled><i class="fa-solid fa-user"></i> Вы</button>`
-               : isFollowing(uid,p.authorId) ? `<button class="btn" disabled><i class="fa-solid fa-user-check"></i> Уже</button>`
-               : `<button class="btn" onclick="follow('${uid}','${p.authorId}')"><i class="fa-solid fa-user-plus"></i> Др</button>`;
-  return `
-    <article class="card post" data-id="${p.id}">
-      <div class="row">
-        <div class="user" data-uid="${p.authorId}">
-          ${avatarHTML(a)}
-          <div>
-            <div class="name">${nameOf(a)} ${a.isPremium?'<i class="fa-solid fa-star" style="color:var(--ok)"></i>':''} ${p.authorId===uid?'<span class="muted">(Вы)</span>':''}</div>
-            <div class="meta">${new Date(p.createdAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
-              ${boostedActive? ' • <span class="badge rocket"><i class="fa-solid fa-rocket"></i> Boost</span>':''}
-            </div>
-          </div>
-        </div>
-        <div><button class="btn" onclick="openPin('${p.id}')" ${p.authorId!==uid?'disabled':''}><i class="fa-solid fa-thumbtack"></i></button></div>
+function renderFeed(){const feed=byId('feed');const uid=state.current;const now=Date.now();const items=(state.posts||[]).slice().sort((a,b)=>{const ab=(toTime(b.boostedAt)&&now-toTime(b.boostedAt)<BOOST_WINDOW)?toTime(b.boostedAt):0;const aa=(toTime(a.boostedAt)&&now-toTime(a.boostedAt)<BOOST_WINDOW)?toTime(a.boostedAt):0;return (ab-aa)||(toTime(b.createdAt)-toTime(a.createdAt));});const friendsOn=byId('tab-friends').dataset.active==='1';const following=new Set(state.social?.following?.[uid]||[]);const list=friendsOn?items.filter(p=>p.authorId===uid||following.has(p.authorId)):items;feed.innerHTML=list.map(p=>{const a=state.users[p.authorId]||{firstName:'User',username:''};const liked=!!(state.likesByUser[uid]&&state.likesByUser[uid][p.id]);const boostedActive=toTime(p.boostedAt)&&(now-toTime(p.boostedAt)<BOOST_WINDOW);const addBtn=p.authorId===uid?`<button class="btn" disabled><i class="fa-solid fa-user"></i> Вы</button>`:isFollowing(uid,p.authorId)?`<button class="btn" disabled><i class="fa-solid fa-user-check"></i> Уже</button>`:`<button class="btn" onclick="follow('${uid}','${p.authorId}')"><i class="fa-solid fa-user-plus"></i> Др</button>`;return `
+<article class="card post" data-id="${p.id}">
+  <div class="row">
+    <div class="user" data-uid="${p.authorId}">
+      ${avatarHTML(a)}
+      <div>
+        <div class="name">${nameOf(a)} ${a.isPremium?'<i class="fa-solid fa-star" style="color:var(--ok)"></i>':''} ${p.authorId===uid?'<span class="muted">(Вы)</span>':''}</div>
+        <div class="meta">${new Date(p.createdAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${boostedActive?' • <span class="badge rocket"><i class="fa-solid fa-rocket"></i> Boost</span>':''}</div>
       </div>
-      <div class="content">${esc(p.text)}</div>
-      <div class="stats"><span><i class="fa-regular fa-eye"></i> ${p.views||0}</span><span><i class="fa-regular fa-heart"></i> ${p.likes||0}</span></div>
-      <div class="actions">
-        <button class="btn" ${p.authorId===uid||liked?'disabled':''} onclick="like('${p.id}')"><i class="fa-regular fa-heart"></i> Лайк</button>
-        <button class="btn" ${p.authorId!==uid?'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст</button>
-        ${addBtn}
-      </div>
-    </article>`;
-}).join('');
-byId('feed-empty').style.display=list.length?'none':'block';renderPin();
-if(feedObserver)feedObserver.disconnect();feedObserver=new IntersectionObserver((entries)=>{entries.forEach(en=>{if(en.isIntersecting&&en.intersectionRatio>=0.5){const id=en.target.getAttribute('data-id');markViewed(id);feedObserver.unobserve(en.target);}})},{threshold:[0.5]});
-document.querySelectorAll('.post').forEach(el=>feedObserver.observe(el));
-}catch(err){console.error('renderFeed error',err,state.posts);toast('Ошибка ленты','err');}}
-function renderPin(){const wrap=byId('pin-wrap');if(!state.pin.active){wrap.style.display='none';return;}
-const p=state.posts.find(x=>x.id===state.pin.active.postId);if(!p){state.pin.active=null;save();RT.send('pin:update',serPin());wrap.style.display='none';return;}
-const a=state.users[p.authorId]||{firstName:'User'};wrap.style.display='block';byId('pin-author').textContent=nameOf(a);byId('pin-text').textContent=p.text;byId('pin-views').textContent=p.views||0;byId('pin-likes').textContent=p.likes||0;
-const leftMs=Math.max(0,toTime(state.pin.active.endsAt)-Date.now());byId('pin-left').textContent=leftMs>0?fmt(leftMs):'—';
-byId('pin-cta').innerHTML=p.authorId===state.current?`<button class="btn" onclick="openPin('${p.id}')"><i class="fa-solid fa-plus"></i> Продлить</button>`:'';}
+    </div>
+    <div><button class="btn" onclick="openPin('${p.id}')" ${p.authorId!==uid?'disabled':''}><i class="fa-solid fa-thumbtack"></i></button></div>
+  </div>
+  <div class="content">${esc(p.text)}</div>
+  <div class="stats"><span><i class="fa-regular fa-eye"></i> ${p.views||0}</span><span><i class="fa-regular fa-heart"></i> ${p.likes||0}</span></div>
+  <div class="actions">
+    <button class="btn" ${p.authorId===uid||liked?'disabled':''} onclick="like('${p.id}')"><i class="fa-regular fa-heart"></i> Лайк</button>
+    <button class="btn" ${p.authorId!==uid?'disabled':''} onclick="openBoost('${p.id}')"><i class="fa-solid fa-rocket"></i> Буст</button>
+    ${addBtn}
+  </div>
+</article>`;}).join('');byId('feed-empty').style.display=list.length?'none':'block';renderPin();if(feedObserver)feedObserver.disconnect();feedObserver=new IntersectionObserver((ents)=>{ents.forEach(en=>{if(en.isIntersecting&&en.intersectionRatio>=0.5){markViewed(en.target.getAttribute('data-id'));feedObserver.unobserve(en.target);}})},{threshold:[0.5]});document.querySelectorAll('.post').forEach(el=>feedObserver.observe(el));}
+function renderPin(){const w=byId('pin-wrap');if(!state.pin.active){w.style.display='none';return;}const p=state.posts.find(x=>x.id===state.pin.active.postId);if(!p){state.pin.active=null;save();RT.send('pin:update',serPin());w.style.display='none';return;}const a=state.users[p.authorId]||{firstName:'User'};w.style.display='block';byId('pin-author').textContent=nameOf(a);byId('pin-text').textContent=p.text;byId('pin-views').textContent=p.views||0;byId('pin-likes').textContent=p.likes||0;const leftMs=Math.max(0,toTime(state.pin.active.endsAt)-Date.now());byId('pin-left').textContent=leftMs>0?fmt(leftMs):'—';byId('pin-cta').innerHTML=p.authorId===state.current?`<button class="btn" onclick="openPin('${p.id}')"><i class="fa-solid fa-plus"></i> Продлить</button>`:'';}
 function renderFriends(){const uid=state.current;const followingIds=state.social.following[uid]||[];const followersIds=state.social.followers[uid]||[];const flw=followingIds.map(id=>state.users[id]?nameOf(state.users[id]):('@'+id)).join('<br/>')||'—';const fol=followersIds.map(id=>state.users[id]?nameOf(state.users[id]):('@'+id)).join('<br/>')||'—';byId('following').innerHTML=flw;byId('followers').innerHTML=fol;}
 function renderAll(){renderHUD();renderFeed();renderFriends();}
 
 /* user modal */
-function openUser(uid){
-  const me=state.current; const u=state.users[uid]||{id:uid,firstName:'User',username:String(uid)};
-  const posts=state.posts.filter(p=>p.authorId===uid); const likes=posts.reduce((a,b)=>a+(b.likes||0),0); const views=posts.reduce((a,b)=>a+(b.views||0),0);
-  byId('u-ava').innerHTML = u.photo? `<img src="${u.photo}" alt="">` : `<div class="u-ava">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`;
-  byId('u-name').textContent=nameOf(u); byId('u-username').textContent='@'+(u.username||'');
-  byId('u-posts').textContent=posts.length; byId('u-likes').textContent=likes; byId('u-views').textContent=views;
-  const following=isFollowing(me,uid);
-  byId('u-follow').style.display = (!following && me!==uid)?'inline-flex':'none';
-  byId('u-unfollow').style.display = (following && me!==uid)?'inline-flex':'none';
-  byId('u-follow').onclick=()=>{follow(me,uid); hide(byId('m-user'));};
-  byId('u-unfollow').onclick=()=>{unfollow(me,uid); hide(byId('m-user'));};
-  show(byId('m-user'));
-}
+function openUser(uid){const me=state.current;const u=state.users[uid]||{id:uid,firstName:'User',username:String(uid)};const posts=state.posts.filter(p=>p.authorId===uid);const likes=posts.reduce((a,b)=>a+(b.likes||0),0);const views=posts.reduce((a,b)=>a+(b.views||0),0);byId('u-ava').innerHTML = u.photo? `<img src="${u.photo}" referrerpolicy="no-referrer" alt="">` : `<div class="u-ava">${(u.firstName||u.username||'U').slice(0,1).toUpperCase()}</div>`;byId('u-name').textContent=nameOf(u);byId('u-username').textContent='@'+(u.username||'');byId('u-posts').textContent=posts.length;byId('u-likes').textContent=likes;byId('u-views').textContent=views;const following=isFollowing(me,uid);byId('u-follow').style.display = (!following && me!==uid)?'inline-flex':'none';byId('u-unfollow').style.display = (following && me!==uid)?'inline-flex':'none';byId('u-follow').onclick=()=>{follow(me,uid); hide(byId('m-user'));};byId('u-unfollow').onclick=()=>{unfollow(me,uid); hide(byId('m-user'));};show(byId('m-user'));}
 
 /* serialization */
 function serPost(p){return {...p,createdAt:p.createdAt instanceof Date?p.createdAt.toISOString():p.createdAt,boostedAt:p.boostedAt?(p.boostedAt instanceof Date?p.boostedAt.toISOString():p.boostedAt):null};}
 function serPin(){return {active:state.pin.active?{postId:state.pin.active.postId,endsAt:state.pin.active.endsAt.toISOString()}:null};}
 
-/* timers & settle */
-function settleIfNeeded(){const now=new Date();const left=state.pool.epochEnds.getTime()-now.getTime();if(left>0)return;const justFinished=new Date(state.pool.epochEnds.getTime());justFinished.setUTCDate(justFinished.getUTCDate()-1);const eid=epochIdUTC(justFinished);if(state.pool.settledId===eid){state.pool.epochEnds=epochEnd();save();renderHUD();return;}
-const totalPts=Object.values(state.epochPoints||{}).reduce((a,b)=>a+(+b||0),0);const amount=state.pool.amt||0;const results={};if(totalPts>0&&amount>0){for(const uid in state.epochPoints){const share=(state.epochPoints[uid]||0)/totalPts;const gain=+(amount*share).toFixed(2);if(gain>0){state.users[uid] ||= {diamonds:0,points:0,firstName:'User',id:uid,username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+gain;results[uid]=gain;}}toast('Пул распределён','info');}
-state.pool.amt=0;state.pool.epochEnds=epochEnd();state.pool.settledId=eid;state.epochPoints={};save();renderHUD();RT.send('pool:settle',{eid,results,next:state.pool.epochEnds.toISOString()});}
-function tick(){if(state.pin.active&&toTime(state.pin.active.endsAt)<=Date.now()){state.pin.active=null;save();RT.send('pin:update',serPin());}
-if(!(state.pool?.epochEnds instanceof Date)||!Number.isFinite(state.pool.epochEnds.getTime()))state.pool.epochEnds=epochEnd();settleIfNeeded();renderHUD();renderPin();}
+/* timers + settle (обнуляем баллы у всех) */
+function settleIfNeeded(){const now=new Date();const left=state.pool.epochEnds.getTime()-now.getTime();if(left>0)return;const justFinished=new Date(state.pool.epochEnds.getTime());justFinished.setUTCDate(justFinished.getUTCDate()-1);const eid=epochIdUTC(justFinished);if(state.pool.settledId===eid){state.pool.epochEnds=epochEnd();save();renderHUD();return;}const totalPts=Object.values(state.epochPoints||{}).reduce((a,b)=>a+(+b||0),0);const amount=state.pool.amt||0;const results={};if(totalPts>0&&amount>0){for(const uid in state.epochPoints){const share=(state.epochPoints[uid]||0)/totalPts;const gain=+(amount*share).toFixed(2);if(gain>0){state.users[uid] ||= {diamonds:0,points:0,firstName:'User',id:uid,username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+gain;results[uid]=gain;}}}
+state.pool.amt=0;state.pool.epochEnds=epochEnd();state.pool.settledId=eid;state.epochPoints={};for(const uid in state.users){state.users[uid].points=0;}save();renderHUD();RT.send('pool:settle',{eid,results,next:state.pool.epochEnds.toISOString(),resetPoints:true});}
+function tick(){if(state.pin.active&&toTime(state.pin.active.endsAt)<=Date.now()){state.pin.active=null;save();RT.send('pin:update',serPin());}if(!(state.pool?.epochEnds instanceof Date))state.pool.epochEnds=epochEnd();settleIfNeeded();renderHUD();renderPin();}
 setInterval(tick,1000);
 
-/* RT events */
+/* realtime handlers */
 RT.on((evt)=>{if(!evt||!evt.type)return;
-if(evt.origin && evt.origin===INSTANCE) { // собственные события, уже обработаны локально
-  if(evt.type!=='user:update'){} // user:update можно пропустить тоже, без вреда
-}
 switch(evt.type){
-  case 'user:upsert':{const u=evt.payload.user;if(!u)break; state.users[u.id]={...(state.users[u.id]||{}),...u}; save(); renderFeed(); renderFriends(); break;}
-  case 'user:update':{const {uid,diamonds,points,updatedAt,photo,firstName,lastName,username}=evt.payload||{};if(!uid)return;
-    state.users[uid] ||= {id:uid,diamonds:0,points:0,firstName:'User',username:uid};
-    const cur=state.users[uid].updatedAt||0; if(!Number.isFinite(cur) || (Number.isFinite(updatedAt)&&updatedAt>=cur)){
-      Object.assign(state.users[uid],{diamonds:+diamonds||0,points:+points||0,updatedAt:+updatedAt||Date.now()});
-      if(photo) state.users[uid].photo=photo; if(firstName) state.users[uid].firstName=firstName; if(lastName!==undefined) state.users[uid].lastName=lastName; if(username) state.users[uid].username=username;
-      if(uid===state.current){save();renderHUD();}
-    } break;}
-  case 'engage:like':{const {uid,postId}=evt.payload||{}; if(!uid||!postId)break; state.likesByUser[uid] ||= {}; state.likesByUser[uid][postId]=true; if(uid===state.current){persistUserEngagement(); renderFeed();} break;}
-  case 'engage:view':{const {uid,postId}=evt.payload||{}; if(!uid||!postId)break; state.viewsByUser[uid] ||= {}; state.viewsByUser[uid][postId]=true; if(uid===state.current){persistUserEngagement();} break;}
+  case 'user:upsert':{const u=evt.payload.user;if(!u)break;state.users[u.id]={...(state.users[u.id]||{}),...u};save();renderFeed();renderFriends();break;}
+  case 'user:update':{const {uid,diamonds,points,updatedAt,photo,firstName,lastName,username}=evt.payload||{};if(!uid)return;state.users[uid] ||= {id:uid,diamonds:0,points:0,firstName:'User',username:uid};const cur=state.users[uid].updatedAt||0;if(!Number.isFinite(cur)||(Number.isFinite(updatedAt)&&updatedAt>=cur)){Object.assign(state.users[uid],{diamonds:+diamonds||0,points:+points||0,updatedAt:+updatedAt||Date.now()});if(photo)state.users[uid].photo=photo;if(firstName)state.users[uid].firstName=firstName;if(lastName!==undefined)state.users[uid].lastName=lastName;if(username)state.users[uid].username=username;if(uid===state.current){save();renderHUD();}}break;}
   case 'post:new':{const p=evt.payload.post; if(!state.posts.find(x=>x.id===p.id)){state.posts.unshift({ ...p, createdAt:new Date(p.createdAt), boostedAt:p.boostedAt?new Date(p.boostedAt):null }); save(); renderFeed();} break;}
   case 'post:stats':{const {id,likes,views}=evt.payload;const p=state.posts.find(x=>x.id===id);if(p){p.likes=Math.max(p.likes,likes);p.views=Math.max(p.views,views);save();renderFeed();}break;}
   case 'post:boost':{const {id,boostedAt}=evt.payload;const p=state.posts.find(x=>x.id===id);if(p){p.boostedAt=new Date(boostedAt);save();renderFeed();}break;}
@@ -488,29 +404,29 @@ switch(evt.type){
   case 'social:follow':{const {from,to}=evt.payload;state.social.followers[to] ||= [];if(!state.social.followers[to].includes(from))state.social.followers[to].push(from);save();renderFriends();renderFeed();break;}
   case 'social:unfollow':{const {from,to}=evt.payload;state.social.followers[to]=(state.social.followers[to]||[]).filter(x=>x!==from);save();renderFriends();renderFeed();break;}
   case 'presence:ping':{const {uid}=evt.payload;state.presence[uid]=Date.now();break;}
-  case 'pool:add':{const {amount}=evt.payload||{}; if(typeof amount==='number'){state.pool.amt=(state.pool.amt||0)+amount;save();renderHUD();} break;} // ВАЖНО: без фильтра по пользователю
   case 'points:add':{const {uid,points}=evt.payload||{};if(Number.isFinite(points)&&points>0){state.epochPoints[uid]=(state.epochPoints[uid]||0)+points;}break;}
-  case 'pool:settle':{const {eid,results,next}=evt.payload||{};if(!eid||state.pool.settledId===eid)break;for(const uid in results){state.users[uid] ||= {diamonds:0,points:0,id:uid,firstName:'User',username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+(+results[uid]||0);}
-    state.pool.amt=0;state.pool.settledId=eid;if(next)state.pool.epochEnds=new Date(next);state.epochPoints={};save();renderHUD();if(results[state.current])toast(`Начислено ${results[state.current]} 💎 из пула`,'ok');break;}
+  case 'pool:add':{ if(evt.origin===INSTANCE) break; const {amount}=evt.payload||{}; if(typeof amount==='number'){state.pool.amt=(state.pool.amt||0)+amount;save();renderHUD();} break;}
+  case 'pool:settle':{const {eid,results,next,resetPoints}=evt.payload||{};if(!eid||state.pool.settledId===eid)break;for(const uid in results){state.users[uid] ||= {diamonds:0,points:0,id:uid,firstName:'User',username:uid};state.users[uid].diamonds=(state.users[uid].diamonds||0)+(+results[uid]||0);}state.pool.amt=0;state.pool.settledId=eid;if(next)state.pool.epochEnds=new Date(next);state.epochPoints={};if(resetPoints){for(const uid in state.users){state.users[uid].points=0;}}save();renderHUD();break;}
 }});
 
-/* UI */
+/* UI wiring */
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-close]'))e.target.closest('.modal').style.display='none';
   const nav=e.target.closest('.nav button');if(nav&&nav.dataset.go){go(nav.dataset.go);}
   const pack=e.target.closest('#store-section [data-pack]');if(pack){const amt=parseInt(pack.dataset.pack,10);const u=state.users[state.current];u.diamonds=(u.diamonds||0)+amt;syncUser(state.current);renderHUD();toast(`Куплено ${amt} 💎`);}
   const userEl=e.target.closest('.user[data-uid]'); if(userEl){ openUser(userEl.dataset.uid); }
 });
-byId('fab').onclick=()=>show(byId('m-create')); byId('post-send').onclick=createPostFlow; byId('boost-do').onclick=doBoost; byId('pin-do').onclick=doPin;
+byId('fab').onclick=()=>show(byId('m-create'));
+byId('post-send').onclick=createPostFlow;
+byId('boost-do').onclick=doBoost;
+byId('pin-do').onclick=doPin;
 byId('tab-all').onclick=()=>{byId('tab-all').style.boxShadow='var(--ring)';byId('tab-friends').style.boxShadow='none';delete byId('tab-friends').dataset.active;renderFeed();};
 byId('tab-friends').onclick=()=>{byId('tab-friends').style.boxShadow='var(--ring)';byId('tab-friends').dataset.active='1';byId('tab-all').style.boxShadow='none';renderFeed();};
 byId('friend-add').onclick=()=>{const v=byId('friend-input').value.trim();if(!v)return;const me=state.current;let id=v.startsWith('@')?v.slice(1):v;state.users[id] ||= {id,firstName:v.startsWith('@')?('@'+id):('User '+id),username:id,diamonds:0,points:0};state.epochPoints[id] ||= 0;follow(me,id);byId('friend-input').value='';};
 byId('to-friends').onclick=()=>go('friends-section'); byId('to-store').onclick=()=>go('store-section');
 
 /* boot */
-(async()=>{await load();await initUser();renderAll();RT.ready.finally(()=>{const me=state.users[state.current];RT.send('user:upsert',{user:me});});})();
-
-/* export */
+(async()=>{await load();await initUser();renderAll();RT.ready.finally(()=>{RT.send('user:upsert',{user:state.users[state.current]});});})();
 window.like=like; window.openBoost=openBoost; window.openPin=openPin; window.follow=follow; window.unfollow=unfollow;
 
 } // end !__STOP_APP__
